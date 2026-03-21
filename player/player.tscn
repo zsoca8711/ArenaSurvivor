@@ -1,0 +1,40 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://player/player.gd" id="1"]
+[ext_resource type="PackedScene" path="res://weapons/bullet.tscn" id="2"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_body"]
+radius = 16.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_hurtbox"]
+radius = 20.0
+
+[node name="Player" type="CharacterBody2D"]
+collision_layer = 1
+collision_mask = 8
+script = ExtResource("1")
+bullet_scene = ExtResource("2")
+
+[node name="Body" type="Polygon2D" parent="."]
+color = Color(0.2, 0.6, 1, 1)
+polygon = PackedVector2Array(20, 0, -12, -14, -6, 0, -12, 14)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_body")
+
+[node name="Muzzle" type="Marker2D" parent="."]
+position = Vector2(22, 0)
+
+[node name="Hurtbox" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 2
+
+[node name="HurtboxShape" type="CollisionShape2D" parent="Hurtbox"]
+shape = SubResource("CircleShape2D_hurtbox")
+
+[node name="FireTimer" type="Timer" parent="."]
+one_shot = true
+
+[node name="Camera2D" type="Camera2D" parent="."]
+
+[connection signal="timeout" from="FireTimer" to="." method="_on_fire_timer_timeout"]
