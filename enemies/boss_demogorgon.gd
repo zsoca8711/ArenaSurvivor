@@ -26,19 +26,19 @@ func _build_visual():
 	for i in petal_count:
 		var angle = i * TAU / petal_count
 
-		# Red edge petal (slightly larger, drawn first)
-		var red_petal = Polygon2D.new()
-		red_petal.color = Color(0.85, 0.12, 0.08)
-		red_petal.polygon = _make_petal(28, 13)
-		red_petal.rotation = angle
-		body.add_child(red_petal)
-
-		# Brown inner petal
+		# Brown edge petal (slightly larger, drawn first)
 		var brown_petal = Polygon2D.new()
 		brown_petal.color = Color(0.45, 0.28, 0.15)
-		brown_petal.polygon = _make_petal(24, 10)
+		brown_petal.polygon = _make_petal(28, 13)
 		brown_petal.rotation = angle
 		body.add_child(brown_petal)
+
+		# Red inner petal
+		var red_petal = Polygon2D.new()
+		red_petal.color = Color(0.85, 0.12, 0.08)
+		red_petal.polygon = _make_petal(24, 10)
+		red_petal.rotation = angle
+		body.add_child(red_petal)
 
 		# Teeth on petal tips (2 white triangles per petal)
 		var tooth1 = Polygon2D.new()
