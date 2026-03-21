@@ -73,8 +73,8 @@ func _process(delta):
 	# Contact damage handling
 	_handle_vehicle_damage(delta)
 
-	# Enter/exit
-	if Input.is_action_just_pressed("open_shop"):
+	# Exit with F
+	if Input.is_action_just_pressed("enter_vehicle"):
 		exit_vehicle()
 
 

@@ -12,6 +12,7 @@ func _setup_actions():
 	_add_key("move_right", KEY_D)
 	_add_mouse("fire", MOUSE_BUTTON_LEFT)
 	_add_key("open_shop", KEY_E)
+	_add_key("enter_vehicle", KEY_F)
 	_add_key("ability_1", KEY_2)
 	_add_key("ability_1_alt", KEY_U)
 	_add_key("ability_2", KEY_I)

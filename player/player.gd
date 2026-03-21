@@ -40,9 +40,18 @@ const TELEKINETIC_COOLDOWN_TIME = 10.0
 const TELEKINETIC_RADIUS = 100.0
 
 
+var laser_sight: Line2D
+
+
 func _ready():
 	hp = max_hp
 	add_to_group("player")
+	# Laser sight
+	laser_sight = Line2D.new()
+	laser_sight.width = 1.5
+	laser_sight.default_color = Color(1, 0, 0, 0.4)
+	laser_sight.z_index = 3
+	add_child(laser_sight)
 	if GameManager.story_mode:
 		# No starting weapon in story mode
 		weapons_owned.clear()
@@ -142,10 +151,10 @@ var in_safe_zone: bool = false
 func _input(event):
 	if is_dead or get_tree().paused:
 		return
-	# Enter nearby vehicle with E (not in safe zone, safe zone uses E for shop)
-	if event.is_action_pressed("open_shop") and not in_vehicle and not in_safe_zone:
+	# Enter nearby vehicle with F
+	if event.is_action_pressed("enter_vehicle") and not in_vehicle:
 		var nearest = _find_nearest_vehicle()
-		if nearest and not WaveManager.buy_phase_active:
+		if nearest:
 			nearest.enter_vehicle(self)
 			in_vehicle = true
 			get_viewport().set_input_as_handled()
@@ -174,6 +183,10 @@ func _handle_movement():
 
 func _handle_aim():
 	look_at(get_global_mouse_position())
+	# Update laser sight
+	laser_sight.clear_points()
+	laser_sight.add_point(Vector2.ZERO)
+	laser_sight.add_point(Vector2(400, 0))  # 400px laser line forward
 
 
 func _handle_shooting():
