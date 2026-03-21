@@ -71,6 +71,8 @@ func _build_ui():
 	_add_cheat_button(vbox, "+$1,000,000", _on_cheat_money)
 	god_mode_btn = _add_cheat_button(vbox, "God Mode: OFF", _on_cheat_god_mode)
 	_add_cheat_button(vbox, "Skip Wave", _on_cheat_skip_wave)
+	_add_cheat_button(vbox, "Summon Demogorgon", _on_cheat_demogorgon)
+	_add_cheat_button(vbox, "Summon Giant Tank", _on_cheat_giant_tank)
 
 
 func _add_button(parent: Control, text: String, callback: Callable):
@@ -132,3 +134,23 @@ func _on_cheat_god_mode():
 
 func _on_cheat_skip_wave():
 	WaveManager.skip_wave()
+
+
+func _on_cheat_demogorgon():
+	var player = get_tree().get_first_node_in_group("player")
+	if player:
+		var scene = preload("res://enemies/boss_demogorgon.tscn")
+		var boss = scene.instantiate()
+		boss.global_position = player.global_position + Vector2(300, 0)
+		get_tree().current_scene.get_node("Enemies").call_deferred("add_child", boss)
+		WaveManager.enemies_alive += 1
+
+
+func _on_cheat_giant_tank():
+	var player = get_tree().get_first_node_in_group("player")
+	if player:
+		var scene = preload("res://enemies/boss_giant_tank.tscn")
+		var boss = scene.instantiate()
+		boss.global_position = player.global_position + Vector2(300, 0)
+		get_tree().current_scene.get_node("Enemies").call_deferred("add_child", boss)
+		WaveManager.enemies_alive += 1
