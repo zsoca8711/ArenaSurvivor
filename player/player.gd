@@ -92,6 +92,14 @@ func _input(event):
 		_switch_weapon(1)
 	elif event.is_action_pressed("weapon_prev"):
 		_switch_weapon(-1)
+	# Number keys 1-9 to select weapon by slot
+	if event is InputEventKey and event.pressed and not event.echo:
+		var key = event.keycode
+		if key >= KEY_1 and key <= KEY_9:
+			var slot = key - KEY_1  # 0-indexed
+			var owned = weapons_owned.keys()
+			if slot < owned.size():
+				current_weapon = owned[slot]
 
 
 func _handle_movement():
