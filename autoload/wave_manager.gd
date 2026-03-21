@@ -47,10 +47,11 @@ func _process_wave(delta):
 
 	# Continuous spawning for the full 3 minutes
 	if wave_timer > 0 and spawn_timer <= 0:
-		# Spawn a horde
-		var horde_size = randi_range(3, 5 + current_wave)
 		var base_pos = _random_edge_position()
 		var enemy_type = _get_enemy_type()
+		# Limit horde size by type
+		var max_horde = _get_max_horde(enemy_type)
+		var horde_size = randi_range(1, max_horde)
 		for i in horde_size:
 			var offset = Vector2(randf_range(-80, 80), randf_range(-80, 80))
 			spawn_requested.emit(base_pos + offset, enemy_type)
@@ -176,6 +177,16 @@ func _get_enemy_type() -> String:
 			return "exploder"
 		else:
 			return "mega_monster"
+
+
+func _get_max_horde(enemy_type: String) -> int:
+	match enemy_type:
+		"swarmer": return 5 + current_wave
+		"tank": return 2
+		"ranged": return 2
+		"exploder": return 3
+		"mega_monster": return 1
+	return 3
 
 
 func skip_wave():
