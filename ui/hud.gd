@@ -6,6 +6,7 @@ var money_label: Label
 var wave_label: Label
 var timer_label: Label
 var kills_label: Label
+var speed_label: Label
 var weapon_label: Label
 var center_message: Label
 var _center_msg_tween: Tween
@@ -58,6 +59,9 @@ func _build_ui():
 	kills_label = _make_label("Kills: 0")
 	hbox.add_child(kills_label)
 
+	speed_label = _make_label("SPD: 200")
+	hbox.add_child(speed_label)
+
 	# Bottom-left weapon info
 	var bottom_margin = MarginContainer.new()
 	bottom_margin.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
@@ -108,10 +112,10 @@ func _process(_delta):
 		var t = WaveManager.get_buy_time_remaining()
 		timer_label.text = "Shop: %d" % ceili(t)
 	kills_label.text = "Kills: %d" % GameManager.kills
-	# Weapon info
 	var player = get_tree().get_first_node_in_group("player")
 	if player:
 		weapon_label.text = "%s | %s" % [player.get_weapon_name(), player.get_ammo_text()]
+		speed_label.text = "SPD: %d" % int(min(player.speed, 200))
 
 
 func _on_money_changed(amount: int):
