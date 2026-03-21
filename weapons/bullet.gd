@@ -45,13 +45,13 @@ func _on_body_entered(body: Node2D):
 		_explode()
 	elif body.is_in_group("enemies"):
 		body.take_damage(damage, bullet_color)
+		if homing:
+			var player = get_tree().get_first_node_in_group("player")
+			if player and player.has_method("on_radio_staff_kill"):
+				player.on_radio_staff_kill()
 	elif body.is_in_group("player") and from_boss:
 		body._last_damage_source_is_boss = true
 		body.take_damage(damage)
-			if homing:
-				var player = get_tree().get_first_node_in_group("player")
-				if player and player.has_method("on_radio_staff_kill"):
-					player.on_radio_staff_kill()
 	call_deferred("queue_free")
 
 
