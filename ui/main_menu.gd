@@ -56,6 +56,7 @@ func _build_ui():
 	sp2.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	main_panel.add_child(sp2)
 
+	_add_button(main_panel, "Story Mode", _on_story)
 	_add_button(main_panel, "Multiplayer", _on_multiplayer)
 	_add_button(main_panel, "Quit", _on_quit)
 
@@ -216,6 +217,15 @@ func _on_map_snow():
 func _on_map_back():
 	map_center.visible = false
 	center.visible = true
+
+
+func _on_story():
+	GameManager.difficulty = GameManager.Difficulty.EASY
+	GameManager.map_type = GameManager.MapType.DEFAULT
+	GameManager.story_mode = true
+	NetworkManager.is_host = false
+	NetworkManager.is_online = false
+	get_tree().change_scene_to_file("res://main/main.tscn")
 
 
 func _on_multiplayer():

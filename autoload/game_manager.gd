@@ -4,6 +4,7 @@ signal money_changed(amount: int)
 signal health_changed(hp: float, max_hp: float)
 signal player_died
 signal game_over
+signal enemy_killed_signal
 
 const ARENA_SIZE = Vector2(10000, 10000)
 const FORTRESS_POS = Vector2(7500, 7500)
@@ -14,6 +15,8 @@ enum MapType {DEFAULT, FOREST, BATTLEFIELD, SNOW}
 
 var difficulty: int = Difficulty.EASY
 var map_type: int = MapType.DEFAULT
+var story_mode: bool = false
+var story_step: int = 0  # 0=find scroll, 1=find treasure, 2=go to safezone, 3=kill 10, 4=won
 var money: int = 0
 var score: int = 0
 var kills: int = 0
@@ -57,6 +60,7 @@ func spend_money(amount: int) -> bool:
 
 func enemy_killed():
 	kills += 1
+	enemy_killed_signal.emit()
 
 
 func on_player_died():
@@ -92,3 +96,5 @@ func reset():
 	score = 0
 	kills = 0
 	game_active = false
+	story_mode = false
+	story_step = 0
