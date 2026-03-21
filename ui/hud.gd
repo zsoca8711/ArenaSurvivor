@@ -9,6 +9,7 @@ var kills_label: Label
 var speed_label: Label
 var weapon_label: Label
 var center_message: Label
+var skip_shop_btn: Button
 var _center_msg_tween: Tween
 
 
@@ -87,6 +88,21 @@ func _build_ui():
 	center_message.add_theme_color_override("font_color", Color(1, 1, 0))
 	center.add_child(center_message)
 
+	# Skip shop button (bottom center, hidden by default)
+	var skip_margin = MarginContainer.new()
+	skip_margin.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
+	skip_margin.add_theme_constant_override("margin_bottom", 60)
+	skip_margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(skip_margin)
+
+	skip_shop_btn = Button.new()
+	skip_shop_btn.text = "Skip Shop Phase"
+	skip_shop_btn.custom_minimum_size = Vector2(200, 45)
+	skip_shop_btn.add_theme_font_size_override("font_size", 20)
+	skip_shop_btn.pressed.connect(_on_skip_shop)
+	skip_shop_btn.visible = false
+	skip_margin.add_child(skip_shop_btn)
+
 
 func _make_label(text: String, color: Color = Color.WHITE) -> Label:
 	var label = Label.new()
@@ -102,6 +118,7 @@ func _connect_signals():
 	WaveManager.wave_started.connect(_on_wave_started)
 	WaveManager.wave_completed.connect(_on_wave_completed)
 	WaveManager.buy_phase_started.connect(_on_buy_phase_started)
+	WaveManager.buy_phase_ended.connect(_on_buy_phase_ended)
 
 
 func _process(_delta):
@@ -129,6 +146,7 @@ func _on_health_changed(hp: float, max_hp: float):
 
 func _on_wave_started(wave_number: int):
 	wave_label.text = "Wave %d" % wave_number
+	skip_shop_btn.visible = false
 	_show_center_message("Wave %d" % wave_number, 2.0)
 
 
@@ -137,7 +155,17 @@ func _on_wave_completed(wave_number: int):
 
 
 func _on_buy_phase_started(_duration: float):
-	_show_center_message("Buy Phase", 3.0)
+	_show_center_message("Buy Phase - Press E for Shop", 3.0)
+	skip_shop_btn.visible = true
+
+
+func _on_buy_phase_ended():
+	skip_shop_btn.visible = false
+
+
+func _on_skip_shop():
+	skip_shop_btn.visible = false
+	WaveManager.skip_buy_phase()
 
 
 func _show_center_message(text: String, duration: float):
