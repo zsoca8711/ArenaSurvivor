@@ -10,6 +10,8 @@ var speed_label: Label
 var weapon_label: Label
 var center_message: Label
 var skip_shop_btn: Button
+var fortress_arrow: Label
+var fortress_active: bool = false
 var _center_msg_tween: Tween
 
 
@@ -103,6 +105,15 @@ func _build_ui():
 	skip_shop_btn.visible = false
 	skip_margin.add_child(skip_shop_btn)
 
+	# Fortress direction arrow
+	fortress_arrow = Label.new()
+	fortress_arrow.text = ">"
+	fortress_arrow.add_theme_font_size_override("font_size", 40)
+	fortress_arrow.add_theme_color_override("font_color", Color(1, 0.15, 0.1))
+	fortress_arrow.visible = false
+	fortress_arrow.z_index = 50
+	add_child(fortress_arrow)
+
 
 func _make_label(text: String, color: Color = Color.WHITE) -> Label:
 	var label = Label.new()
@@ -119,6 +130,7 @@ func _connect_signals():
 	WaveManager.wave_completed.connect(_on_wave_completed)
 	WaveManager.buy_phase_started.connect(_on_buy_phase_started)
 	WaveManager.buy_phase_ended.connect(_on_buy_phase_ended)
+	WaveManager.fortress_activated.connect(_on_fortress_activated)
 
 
 func _process(_delta):
@@ -133,6 +145,37 @@ func _process(_delta):
 	if player:
 		weapon_label.text = "%s | %s" % [player.get_weapon_name(), player.get_ammo_text()]
 		speed_label.text = "SPD: %d" % int(min(player.speed, 200))
+		_update_fortress_arrow(player)
+
+
+func _update_fortress_arrow(player):
+	if not fortress_active or WaveManager.fortress_enemies_alive <= 0:
+		fortress_arrow.visible = false
+		return
+	fortress_arrow.visible = true
+	var fp = GameManager.FORTRESS_POS
+	var pp = player.global_position
+	var dir = (fp - pp).normalized()
+	var angle = dir.angle()
+	# Position arrow at screen edge in the direction of fortress
+	var vp = get_viewport().get_visible_rect().size
+	var center = vp / 2.0
+	var margin = 60.0
+	# Clamp to screen edges
+	var arrow_pos = center + dir * 300.0
+	arrow_pos.x = clamp(arrow_pos.x, margin, vp.x - margin)
+	arrow_pos.y = clamp(arrow_pos.y, margin, vp.y - margin)
+	fortress_arrow.position = arrow_pos
+	# Rotate arrow text based on direction
+	fortress_arrow.rotation = angle
+	# Show distance
+	var dist = int(pp.distance_to(fp))
+	fortress_arrow.text = "FORTRESS %dm >" % (dist / 10)
+
+
+func _on_fortress_activated():
+	fortress_active = true
+	_show_center_message("FORTRESS SPAWNED!", 4.0)
 
 
 func _on_money_changed(amount: int):
