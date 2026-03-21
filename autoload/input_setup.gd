@@ -17,6 +17,8 @@ func _setup_actions():
 	_add_key("ability_3", KEY_O)
 	_add_key("ability_4", KEY_P)
 	_add_key("pause", KEY_ESCAPE)
+	_add_mouse("weapon_next", MOUSE_BUTTON_WHEEL_UP)
+	_add_mouse("weapon_prev", MOUSE_BUTTON_WHEEL_DOWN)
 
 
 func _add_key(action: String, keycode: Key):

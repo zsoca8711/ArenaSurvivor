@@ -2,7 +2,6 @@ extends CharacterBody2D
 
 @export var speed: float = 300.0
 @export var max_hp: float = 100.0
-@export var fire_rate: float = 0.3
 @export var bullet_scene: PackedScene
 
 var hp: float
@@ -10,8 +9,24 @@ var can_fire: bool = true
 var is_dead: bool = false
 var damage_cooldown: float = 0.0
 var damage_bonus: float = 0.0
+var fire_rate_bonus: float = 0.0
+var invincible: bool = false
 
 const DAMAGE_COOLDOWN_TIME = 0.5
+
+# Weapon system
+const WEAPONS = {
+	"pistol": {"name": "Pistol", "damage": 10, "fire_rate": 0.3, "speed": 800, "spread": 0.0, "bullets": 1, "lifetime": 3.0, "aoe": 0.0, "color": Color(1, 0.9, 0.2)},
+	"shotgun": {"name": "Shotgun", "damage": 8, "fire_rate": 0.8, "speed": 600, "spread": 15.0, "bullets": 5, "lifetime": 1.5, "aoe": 0.0, "color": Color(1, 0.6, 0.2)},
+	"smg": {"name": "SMG", "damage": 6, "fire_rate": 0.08, "speed": 700, "spread": 5.0, "bullets": 1, "lifetime": 3.0, "aoe": 0.0, "color": Color(0.8, 0.8, 0.2)},
+	"rifle": {"name": "Rifle", "damage": 40, "fire_rate": 1.2, "speed": 1200, "spread": 0.0, "bullets": 1, "lifetime": 3.0, "aoe": 0.0, "color": Color(0.3, 0.9, 1.0)},
+	"rocket_launcher": {"name": "Rocket Launcher", "damage": 80, "fire_rate": 2.0, "speed": 400, "spread": 0.0, "bullets": 1, "lifetime": 5.0, "aoe": 120.0, "color": Color(1, 0.3, 0.1)},
+	"flamethrower": {"name": "Flamethrower", "damage": 3, "fire_rate": 0.03, "speed": 300, "spread": 12.0, "bullets": 1, "lifetime": 0.4, "aoe": 0.0, "color": Color(1, 0.5, 0.0)},
+	"minigun": {"name": "Minigun", "damage": 12, "fire_rate": 0.05, "speed": 750, "spread": 8.0, "bullets": 1, "lifetime": 3.0, "aoe": 0.0, "color": Color(0.7, 0.7, 0.7)},
+}
+
+var weapons_owned: Dictionary = {"pistol": -1}  # weapon_id -> ammo (-1 = infinite)
+var current_weapon: String = "pistol"
 
 
 func _ready():
@@ -31,6 +46,15 @@ func _process(_delta):
 	if is_dead:
 		return
 	_handle_shooting()
+
+
+func _input(event):
+	if is_dead or get_tree().paused:
+		return
+	if event.is_action_pressed("weapon_next"):
+		_switch_weapon(1)
+	elif event.is_action_pressed("weapon_prev"):
+		_switch_weapon(-1)
 
 
 func _handle_movement():
@@ -53,13 +77,74 @@ func _handle_shooting():
 func _fire():
 	if bullet_scene == null:
 		return
+	var weapon = WEAPONS[current_weapon]
+	var ammo = weapons_owned[current_weapon]
+	# Check ammo (skip for infinite = -1)
+	if ammo == 0:
+		# Auto-switch to pistol when empty
+		current_weapon = "pistol"
+		return
+	if ammo > 0:
+		weapons_owned[current_weapon] -= weapon["bullets"]
+		if weapons_owned[current_weapon] <= 0:
+			weapons_owned[current_weapon] = 0
+
 	can_fire = false
-	var bullet = bullet_scene.instantiate()
-	bullet.global_position = $Muzzle.global_position
-	bullet.rotation = rotation
-	bullet.damage += damage_bonus
-	get_tree().current_scene.add_child(bullet)
-	$FireTimer.start(fire_rate)
+	for i in weapon["bullets"]:
+		var bullet = bullet_scene.instantiate()
+		bullet.global_position = $Muzzle.global_position
+		var spread_angle = deg_to_rad(randf_range(-weapon["spread"], weapon["spread"]))
+		bullet.rotation = rotation + spread_angle
+		bullet.speed = weapon["speed"]
+		bullet.damage = weapon["damage"] + damage_bonus
+		bullet.lifetime = weapon["lifetime"]
+		bullet.aoe_radius = weapon["aoe"]
+		bullet.bullet_color = weapon["color"]
+		get_tree().current_scene.add_child(bullet)
+	var rate = max(0.02, weapon["fire_rate"] - fire_rate_bonus)
+	$FireTimer.start(rate)
+
+
+func _switch_weapon(direction: int):
+	var owned = weapons_owned.keys()
+	if owned.size() <= 1:
+		return
+	var idx = owned.find(current_weapon)
+	idx = (idx + direction) % owned.size()
+	if idx < 0:
+		idx += owned.size()
+	current_weapon = owned[idx]
+
+
+func add_weapon(weapon_id: String, ammo: int):
+	if weapons_owned.has(weapon_id):
+		# Already owned — add ammo
+		if weapons_owned[weapon_id] >= 0:
+			weapons_owned[weapon_id] += ammo
+	else:
+		weapons_owned[weapon_id] = ammo
+	current_weapon = weapon_id
+
+
+func add_ammo(amount: int):
+	# Add ammo to current weapon if it uses ammo
+	if weapons_owned[current_weapon] >= 0:
+		weapons_owned[current_weapon] += amount
+		return
+	# Otherwise find first weapon that needs ammo
+	for weapon_id in weapons_owned:
+		if weapons_owned[weapon_id] >= 0:
+			weapons_owned[weapon_id] += amount
+			return
+
+
+func get_ammo_text() -> String:
+	var ammo = weapons_owned[current_weapon]
+	return "INF" if ammo == -1 else str(ammo)
+
+
+func get_weapon_name() -> String:
+	return WEAPONS[current_weapon]["name"]
 
 
 func _process_contact_damage(delta):
@@ -74,7 +159,7 @@ func _process_contact_damage(delta):
 
 
 func take_damage(amount: float):
-	if is_dead:
+	if is_dead or invincible:
 		return
 	hp -= amount
 	hp = max(hp, 0)

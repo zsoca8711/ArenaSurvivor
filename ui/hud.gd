@@ -6,6 +6,7 @@ var money_label: Label
 var wave_label: Label
 var timer_label: Label
 var kills_label: Label
+var weapon_label: Label
 var center_message: Label
 var _center_msg_tween: Tween
 
@@ -57,6 +58,21 @@ func _build_ui():
 	kills_label = _make_label("Kills: 0")
 	hbox.add_child(kills_label)
 
+	# Bottom-left weapon info
+	var bottom_margin = MarginContainer.new()
+	bottom_margin.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
+	bottom_margin.add_theme_constant_override("margin_left", 20)
+	bottom_margin.add_theme_constant_override("margin_bottom", 15)
+	bottom_margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(bottom_margin)
+
+	weapon_label = Label.new()
+	weapon_label.text = "Pistol | INF"
+	weapon_label.add_theme_font_size_override("font_size", 24)
+	weapon_label.add_theme_color_override("font_color", Color(1, 0.9, 0.5))
+	weapon_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bottom_margin.add_child(weapon_label)
+
 	var center = CenterContainer.new()
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -92,6 +108,10 @@ func _process(_delta):
 		var t = WaveManager.get_buy_time_remaining()
 		timer_label.text = "Shop: %d" % ceili(t)
 	kills_label.text = "Kills: %d" % GameManager.kills
+	# Weapon info
+	var player = get_tree().get_first_node_in_group("player")
+	if player:
+		weapon_label.text = "%s | %s" % [player.get_weapon_name(), player.get_ammo_text()]
 
 
 func _on_money_changed(amount: int):

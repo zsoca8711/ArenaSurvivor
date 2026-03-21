@@ -4,7 +4,7 @@ signal wave_started(wave_number: int)
 signal wave_completed(wave_number: int)
 signal buy_phase_started(duration: float)
 signal buy_phase_ended
-signal spawn_requested(position: Vector2)
+signal spawn_requested(position: Vector2, enemy_type: String)
 
 var current_wave: int = 0
 var wave_active: bool = false
@@ -43,7 +43,8 @@ func _process_wave(delta):
 
 	if enemies_to_spawn > 0 and spawn_timer <= 0:
 		var pos = _random_edge_position()
-		spawn_requested.emit(pos)
+		var enemy_type = _get_enemy_type()
+		spawn_requested.emit(pos, enemy_type)
 		enemies_to_spawn -= 1
 		enemies_alive += 1
 		spawn_timer = spawn_interval
@@ -144,6 +145,41 @@ func _get_player() -> Node2D:
 	if players.size() > 0:
 		return players[0]
 	return null
+
+
+func _get_enemy_type() -> String:
+	if current_wave <= 2:
+		return "swarmer"
+	elif current_wave <= 4:
+		var roll = randf()
+		if roll < 0.6:
+			return "swarmer"
+		elif roll < 0.85:
+			return "tank"
+		else:
+			return "ranged"
+	else:
+		var roll = randf()
+		if roll < 0.35:
+			return "swarmer"
+		elif roll < 0.55:
+			return "tank"
+		elif roll < 0.70:
+			return "ranged"
+		elif roll < 0.85:
+			return "exploder"
+		else:
+			return "mega_monster"
+
+
+func skip_wave():
+	# Kill all remaining enemies and end wave
+	for enemy in get_tree().get_nodes_in_group("enemies"):
+		enemy.queue_free()
+	enemies_alive = 0
+	enemies_to_spawn = 0
+	if wave_active:
+		_wave_cleared()
 
 
 func reset():

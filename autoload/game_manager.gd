@@ -5,7 +5,7 @@ signal health_changed(hp: float, max_hp: float)
 signal player_died
 signal game_over
 
-const ARENA_SIZE = Vector2(5000, 5000)
+const ARENA_SIZE = Vector2(3000, 3000)
 
 var money: int = 0
 var score: int = 0
@@ -42,6 +42,28 @@ func on_player_died():
 	game_active = false
 	player_died.emit()
 	game_over.emit()
+
+
+var _pickup_scene = preload("res://loot/pickup.tscn")
+
+
+func try_drop_loot(pos: Vector2):
+	if randf() > 0.25:  # 75% chance of no drop
+		return
+	var pickup = _pickup_scene.instantiate()
+	pickup.global_position = pos
+	var roll = randf()
+	if roll < 0.25:
+		pickup.pickup_type = 0  # HEALTH
+	elif roll < 0.45:
+		pickup.pickup_type = 1  # AMMO
+	elif roll < 0.60:
+		pickup.pickup_type = 2  # SPEED_BOOST
+	elif roll < 0.75:
+		pickup.pickup_type = 3  # DAMAGE_BOOST
+	else:
+		pickup.pickup_type = 4  # MONEY
+	get_tree().current_scene.add_child(pickup)
 
 
 func reset():

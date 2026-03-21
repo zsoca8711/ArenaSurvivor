@@ -4,12 +4,22 @@ var is_open: bool = false
 var money_label: Label
 var item_container: VBoxContainer
 
-var upgrades = [
-	{"id": "damage", "name": "Pistol Damage +5", "price": 200},
-	{"id": "fire_rate", "name": "Fire Rate Up", "price": 300},
-	{"id": "max_hp", "name": "Max HP +25", "price": 250},
-	{"id": "speed", "name": "Speed +30", "price": 200},
-	{"id": "heal", "name": "Full Heal", "price": 150},
+var weapon_items = [
+	{"id": "shotgun", "name": "Shotgun", "price": 500, "ammo": 30, "type": "weapon"},
+	{"id": "smg", "name": "SMG", "price": 800, "ammo": 200, "type": "weapon"},
+	{"id": "rifle", "name": "Rifle", "price": 1200, "ammo": 20, "type": "weapon"},
+	{"id": "rocket_launcher", "name": "Rocket Launcher", "price": 2000, "ammo": 10, "type": "weapon"},
+	{"id": "flamethrower", "name": "Flamethrower", "price": 1500, "ammo": 300, "type": "weapon"},
+	{"id": "minigun", "name": "Minigun", "price": 3000, "ammo": 500, "type": "weapon"},
+]
+
+var upgrade_items = [
+	{"id": "ammo", "name": "Ammo Refill +50", "price": 100, "type": "upgrade"},
+	{"id": "heal", "name": "Full Heal", "price": 150, "type": "upgrade"},
+	{"id": "damage", "name": "Damage +5", "price": 200, "type": "upgrade"},
+	{"id": "fire_rate", "name": "Fire Rate Up", "price": 300, "type": "upgrade"},
+	{"id": "max_hp", "name": "Max HP +25", "price": 250, "type": "upgrade"},
+	{"id": "speed", "name": "Speed +30", "price": 200, "type": "upgrade"},
 ]
 
 
@@ -40,73 +50,108 @@ func _build_ui():
 
 	var center = CenterContainer.new()
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(center)
 
 	var panel = VBoxContainer.new()
 	panel.alignment = BoxContainer.ALIGNMENT_CENTER
-	panel.add_theme_constant_override("separation", 15)
+	panel.add_theme_constant_override("separation", 10)
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	center.add_child(panel)
 
 	var title = Label.new()
 	title.text = "SHOP"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 48)
+	title.add_theme_font_size_override("font_size", 42)
 	title.add_theme_color_override("font_color", Color(1, 0.85, 0))
+	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_child(title)
 
 	money_label = Label.new()
 	money_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	money_label.add_theme_font_size_override("font_size", 28)
+	money_label.add_theme_font_size_override("font_size", 24)
 	money_label.add_theme_color_override("font_color", Color(1, 0.85, 0))
+	money_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_child(money_label)
 
-	var spacer = Control.new()
-	spacer.custom_minimum_size = Vector2(0, 10)
-	panel.add_child(spacer)
+	# Weapons header
+	var wh = Label.new()
+	wh.text = "-- Weapons --"
+	wh.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	wh.add_theme_font_size_override("font_size", 18)
+	wh.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
+	wh.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(wh)
 
 	item_container = VBoxContainer.new()
-	item_container.add_theme_constant_override("separation", 8)
+	item_container.add_theme_constant_override("separation", 4)
+	item_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_child(item_container)
 
-	for upgrade in upgrades:
-		_add_upgrade_row(upgrade)
+	for item in weapon_items:
+		_add_item_row(item)
 
-	var spacer2 = Control.new()
-	spacer2.custom_minimum_size = Vector2(0, 15)
-	panel.add_child(spacer2)
+	# Upgrades header
+	var uh = Label.new()
+	uh.text = "-- Upgrades --"
+	uh.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	uh.add_theme_font_size_override("font_size", 18)
+	uh.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
+	uh.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(uh)
+
+	var upgrade_container = VBoxContainer.new()
+	upgrade_container.add_theme_constant_override("separation", 4)
+	upgrade_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(upgrade_container)
+
+	for item in upgrade_items:
+		_add_item_row_to(upgrade_container, item)
+
+	var spacer = Control.new()
+	spacer.custom_minimum_size = Vector2(0, 8)
+	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(spacer)
 
 	var close_btn = Button.new()
 	close_btn.text = "Close Shop (E)"
-	close_btn.custom_minimum_size = Vector2(250, 45)
-	close_btn.add_theme_font_size_override("font_size", 20)
+	close_btn.custom_minimum_size = Vector2(250, 40)
+	close_btn.add_theme_font_size_override("font_size", 18)
 	close_btn.pressed.connect(close)
 	panel.add_child(close_btn)
 
 
-func _add_upgrade_row(upgrade: Dictionary):
+func _add_item_row(item: Dictionary):
+	_add_item_row_to(item_container, item)
+
+
+func _add_item_row_to(container: VBoxContainer, item: Dictionary):
 	var hbox = HBoxContainer.new()
-	hbox.add_theme_constant_override("separation", 20)
+	hbox.add_theme_constant_override("separation", 15)
 	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	item_container.add_child(hbox)
+	hbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	container.add_child(hbox)
 
 	var name_label = Label.new()
-	name_label.text = upgrade["name"]
-	name_label.custom_minimum_size = Vector2(250, 0)
-	name_label.add_theme_font_size_override("font_size", 22)
+	name_label.text = item["name"]
+	name_label.custom_minimum_size = Vector2(220, 0)
+	name_label.add_theme_font_size_override("font_size", 18)
+	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hbox.add_child(name_label)
 
 	var price_label = Label.new()
-	price_label.text = "$%d" % upgrade["price"]
-	price_label.custom_minimum_size = Vector2(80, 0)
-	price_label.add_theme_font_size_override("font_size", 22)
+	price_label.text = "$%d" % item["price"]
+	price_label.custom_minimum_size = Vector2(70, 0)
+	price_label.add_theme_font_size_override("font_size", 18)
 	price_label.add_theme_color_override("font_color", Color(1, 0.85, 0))
+	price_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hbox.add_child(price_label)
 
 	var buy_btn = Button.new()
 	buy_btn.text = "BUY"
-	buy_btn.custom_minimum_size = Vector2(80, 40)
-	buy_btn.add_theme_font_size_override("font_size", 18)
-	buy_btn.pressed.connect(_on_buy.bind(upgrade["id"], upgrade["price"]))
+	buy_btn.custom_minimum_size = Vector2(70, 34)
+	buy_btn.add_theme_font_size_override("font_size", 16)
+	buy_btn.pressed.connect(_on_buy.bind(item))
 	hbox.add_child(buy_btn)
 
 
@@ -131,28 +176,33 @@ func _update_money():
 	money_label.text = "Money: $%d" % GameManager.money
 
 
-func _on_buy(upgrade_id: String, price: int):
-	if not GameManager.spend_money(price):
+func _on_buy(item: Dictionary):
+	if not GameManager.spend_money(item["price"]):
 		return
 	var player = get_tree().get_first_node_in_group("player")
 	if player == null:
 		return
-	_apply_upgrade(upgrade_id, player)
+	if item["type"] == "weapon":
+		player.add_weapon(item["id"], item["ammo"])
+	else:
+		_apply_upgrade(item["id"], player)
 	_update_money()
 
 
 func _apply_upgrade(upgrade_id: String, player):
 	match upgrade_id:
+		"ammo":
+			player.add_ammo(50)
+		"heal":
+			player.hp = player.max_hp
+			GameManager.health_changed.emit(player.hp, player.max_hp)
 		"damage":
 			player.damage_bonus += 5.0
 		"fire_rate":
-			player.fire_rate = max(0.05, player.fire_rate - 0.03)
+			player.fire_rate_bonus += 0.02
 		"max_hp":
 			player.max_hp += 25.0
 			player.hp = min(player.hp + 25.0, player.max_hp)
 			GameManager.health_changed.emit(player.hp, player.max_hp)
 		"speed":
 			player.speed += 30.0
-		"heal":
-			player.hp = player.max_hp
-			GameManager.health_changed.emit(player.hp, player.max_hp)

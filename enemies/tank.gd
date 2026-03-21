@@ -1,9 +1,9 @@
 extends CharacterBody2D
 
-@export var speed: float = 150.0
-@export var max_hp: float = 30.0
-@export var contact_damage: float = 10.0
-@export var money_reward: int = 50
+@export var speed: float = 60.0
+@export var max_hp: float = 200.0
+@export var contact_damage: float = 30.0
+@export var money_reward: int = 500
 
 var hp: float
 var target: Node2D
@@ -26,14 +26,7 @@ func _physics_process(_delta):
 func _find_target():
 	var players = get_tree().get_nodes_in_group("player")
 	if players.size() > 0:
-		var closest: Node2D = null
-		var min_dist = INF
-		for p in players:
-			var dist = global_position.distance_to(p.global_position)
-			if dist < min_dist:
-				min_dist = dist
-				closest = p
-		target = closest
+		target = players[0]
 
 
 func take_damage(amount: float):
@@ -42,7 +35,7 @@ func take_damage(amount: float):
 	get_tree().create_timer(0.05).timeout.connect(
 		func():
 			if is_instance_valid(self):
-				$Body.color = Color(0.9, 0.2, 0.2)
+				$Body.color = Color(0.5, 0.45, 0.35)
 	)
 	if hp <= 0:
 		die()

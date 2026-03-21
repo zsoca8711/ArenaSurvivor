@@ -1,0 +1,68 @@
+extends CharacterBody2D
+
+@export var speed: float = 200.0
+@export var max_hp: float = 20.0
+@export var contact_damage: float = 0.0
+@export var money_reward: int = 200
+@export var explosion_damage: float = 40.0
+@export var explosion_radius: float = 100.0
+
+var hp: float
+var target: Node2D
+var exploded: bool = false
+
+
+func _ready():
+	hp = max_hp
+	add_to_group("enemies")
+	_find_target()
+
+
+func _physics_process(_delta):
+	if exploded:
+		return
+	if target and is_instance_valid(target):
+		var direction = (target.global_position - global_position).normalized()
+		velocity = direction * speed
+		move_and_slide()
+		rotation = direction.angle()
+		# Explode when close to player
+		if global_position.distance_to(target.global_position) < 80:
+			_explode()
+
+
+func _find_target():
+	var players = get_tree().get_nodes_in_group("player")
+	if players.size() > 0:
+		target = players[0]
+
+
+func take_damage(amount: float):
+	hp -= amount
+	$Body.color = Color(1, 1, 0.5)
+	get_tree().create_timer(0.05).timeout.connect(
+		func():
+			if is_instance_valid(self):
+				$Body.color = Color(1, 0.5, 0.1)
+	)
+	if hp <= 0:
+		_explode()
+
+
+func _explode():
+	if exploded:
+		return
+	exploded = true
+	# Damage player if in radius
+	var player = get_tree().get_first_node_in_group("player")
+	if player and global_position.distance_to(player.global_position) <= explosion_radius:
+		player.take_damage(explosion_damage)
+	GameManager.add_money(money_reward)
+	GameManager.enemy_killed()
+	WaveManager.enemy_died()
+	GameManager.try_drop_loot(global_position)
+	queue_free()
+
+
+func die():
+	_explode()
