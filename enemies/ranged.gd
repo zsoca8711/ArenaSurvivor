@@ -59,11 +59,11 @@ func _fire():
 
 func take_damage(amount: float):
 	hp -= amount
-	$Body.color = Color(1, 1, 1)
+	$Body.modulate = Color(1, 0.3, 0.3)
 	get_tree().create_timer(0.05).timeout.connect(
 		func():
 			if is_instance_valid(self):
-				$Body.color = Color(0.6, 0.2, 0.8)
+				$Body.modulate = Color(1, 1, 1)
 	)
 	if hp <= 0:
 		die()

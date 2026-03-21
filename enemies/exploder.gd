@@ -39,11 +39,11 @@ func _find_target():
 
 func take_damage(amount: float):
 	hp -= amount
-	$Body.color = Color(1, 1, 0.5)
+	$Body.modulate = Color(1, 1, 0.3)
 	get_tree().create_timer(0.05).timeout.connect(
 		func():
 			if is_instance_valid(self):
-				$Body.color = Color(1, 0.5, 0.1)
+				$Body.modulate = Color(1, 1, 1)
 	)
 	if hp <= 0:
 		_explode()

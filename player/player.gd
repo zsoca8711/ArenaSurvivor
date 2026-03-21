@@ -166,11 +166,11 @@ func take_damage(amount: float):
 	hp -= amount
 	hp = max(hp, 0)
 	GameManager.health_changed.emit(hp, max_hp)
-	$Body.color = Color(1, 0.3, 0.3)
+	$Body.modulate = Color(1, 0.3, 0.3)
 	get_tree().create_timer(0.1).timeout.connect(
 		func():
 			if is_instance_valid(self):
-				$Body.color = Color(0.2, 0.6, 1.0)
+				$Body.modulate = Color(1, 1, 1)
 	)
 	if hp <= 0:
 		_die()
@@ -178,7 +178,7 @@ func take_damage(amount: float):
 
 func _die():
 	is_dead = true
-	$Body.color = Color(0.5, 0.5, 0.5, 0.5)
+	$Body.modulate = Color(0.5, 0.5, 0.5, 0.5)
 	GameManager.on_player_died()
 
 
