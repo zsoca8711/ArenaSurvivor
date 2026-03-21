@@ -23,10 +23,15 @@ var _search_code: String = ""
 
 
 func create_server() -> bool:
+	# Clean up any previous connection
+	disconnect_from_game()
 	var peer = ENetMultiplayerPeer.new()
 	var error = peer.create_server(GAME_PORT, 4)
 	if error != OK:
-		return false
+		# Try alternative port if main is busy
+		error = peer.create_server(GAME_PORT + 1, 4)
+		if error != OK:
+			return false
 	multiplayer.multiplayer_peer = peer
 	is_host = true
 	is_online = true
@@ -118,6 +123,15 @@ func _on_peer_disconnected(id: int):
 
 
 func disconnect_from_game():
+	# Disconnect signals to prevent duplicates
+	if multiplayer.peer_connected.is_connected(_on_peer_connected):
+		multiplayer.peer_connected.disconnect(_on_peer_connected)
+	if multiplayer.peer_disconnected.is_connected(_on_peer_disconnected):
+		multiplayer.peer_disconnected.disconnect(_on_peer_disconnected)
+	if multiplayer.connected_to_server.is_connected(_on_connected_to_server):
+		multiplayer.connected_to_server.disconnect(_on_connected_to_server)
+	if multiplayer.connection_failed.is_connected(_on_connection_failed):
+		multiplayer.connection_failed.disconnect(_on_connection_failed)
 	if multiplayer.multiplayer_peer:
 		multiplayer.multiplayer_peer.close()
 		multiplayer.multiplayer_peer = null
