@@ -16,6 +16,7 @@ func _setup_actions():
 	_add_key("ability_2", KEY_I)
 	_add_key("ability_3", KEY_O)
 	_add_key("ability_4", KEY_P)
+	_add_key("pause", KEY_ESCAPE)
 
 
 func _add_key(action: String, keycode: Key):

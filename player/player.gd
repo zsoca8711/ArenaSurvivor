@@ -9,6 +9,7 @@ var hp: float
 var can_fire: bool = true
 var is_dead: bool = false
 var damage_cooldown: float = 0.0
+var damage_bonus: float = 0.0
 
 const DAMAGE_COOLDOWN_TIME = 0.5
 
@@ -56,6 +57,7 @@ func _fire():
 	var bullet = bullet_scene.instantiate()
 	bullet.global_position = $Muzzle.global_position
 	bullet.rotation = rotation
+	bullet.damage += damage_bonus
 	get_tree().current_scene.add_child(bullet)
 	$FireTimer.start(fire_rate)
 

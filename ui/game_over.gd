@@ -60,6 +60,12 @@ func _build_ui():
 	restart_button.pressed.connect(_on_restart)
 	vbox.add_child(restart_button)
 
+	var menu_button = Button.new()
+	menu_button.text = "Main Menu"
+	menu_button.custom_minimum_size = Vector2(200, 50)
+	menu_button.pressed.connect(_on_main_menu)
+	vbox.add_child(menu_button)
+
 
 func _on_game_over():
 	score_label.text = "Score: $%d" % GameManager.score
@@ -76,3 +82,10 @@ func _on_restart():
 	GameManager.reset()
 	WaveManager.reset()
 	get_tree().reload_current_scene()
+
+
+func _on_main_menu():
+	get_tree().paused = false
+	GameManager.reset()
+	WaveManager.reset()
+	get_tree().change_scene_to_file("res://ui/main_menu.tscn")

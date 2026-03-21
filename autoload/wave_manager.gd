@@ -17,8 +17,7 @@ var spawn_timer: float = 0.0
 var spawn_interval: float = 1.0
 
 const BUY_PHASE_DURATION = 20.0
-const BASE_WAVE_DURATION = 30.0
-const WAVE_DURATION_INCREMENT = 5.0
+const WAVE_DURATION = 180.0
 const BASE_ENEMY_COUNT = 8
 const ENEMY_COUNT_INCREMENT = 4
 const BONUS_WAVE_INTERVAL = 15
@@ -49,14 +48,14 @@ func _process_wave(delta):
 		enemies_alive += 1
 		spawn_timer = spawn_interval
 
-	# All enemies killed before timer — buy phase reward
+	# All enemies killed before timer — buy phase with bonus
 	if enemies_alive <= 0 and enemies_to_spawn <= 0:
 		_wave_cleared()
 		return
 
-	# Timer expired with enemies remaining — next wave stacks on top
+	# Timer expired — buy phase even with enemies still alive
 	if wave_timer <= 0 and enemies_to_spawn <= 0:
-		_start_next_wave()
+		_wave_expired()
 
 
 func _wave_cleared():
@@ -66,6 +65,14 @@ func _wave_cleared():
 	if current_wave % BONUS_WAVE_INTERVAL == 0:
 		GameManager.add_money(BONUS_WAVE_MONEY)
 	wave_completed.emit(current_wave)
+	_start_buy_phase()
+
+
+func _wave_expired():
+	# Time's up — shop opens, but remaining enemies stay alive
+	wave_active = false
+	var wave_reward = 50 + current_wave * 25  # Smaller reward for not clearing
+	GameManager.add_money(wave_reward)
 	_start_buy_phase()
 
 
@@ -88,11 +95,10 @@ func _start_next_wave():
 	wave_active = true
 
 	var enemy_count = BASE_ENEMY_COUNT + current_wave * ENEMY_COUNT_INCREMENT
-	var duration = BASE_WAVE_DURATION + current_wave * WAVE_DURATION_INCREMENT
 
 	enemies_to_spawn = enemy_count
-	wave_timer = duration
-	spawn_interval = duration / float(enemy_count)
+	wave_timer = WAVE_DURATION
+	spawn_interval = WAVE_DURATION / float(enemy_count)
 	spawn_timer = 0.0
 
 	wave_started.emit(current_wave)
