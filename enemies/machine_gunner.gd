@@ -35,7 +35,7 @@ func _process(delta):
 		return
 	fire_timer -= delta
 	# Don't shoot player in safe zone
-	if target.has_method("get") and target.get("in_safe_zone"):
+	if "in_safe_zone" in target and target.in_safe_zone:
 		return
 	var dist = global_position.distance_to(target.global_position)
 	if fire_timer <= 0 and dist <= ATTACK_RANGE:

@@ -16,6 +16,10 @@ func _physics_process(delta):
 
 func _on_body_entered(body: Node2D):
 	if body.is_in_group("player"):
+		# Don't damage player in safe zone
+		if "in_safe_zone" in body and body.in_safe_zone:
+			call_deferred("queue_free")
+			return
 		if from_boss:
 			body._last_damage_source_is_boss = true
 		body.take_damage(damage)
