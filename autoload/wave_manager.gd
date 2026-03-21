@@ -42,12 +42,16 @@ func _process_wave(delta):
 	spawn_timer -= delta
 
 	if enemies_to_spawn > 0 and spawn_timer <= 0:
-		var pos = _random_edge_position()
+		# Spawn a horde (group of same type)
+		var horde_size = mini(randi_range(3, 7), enemies_to_spawn)
+		var base_pos = _random_edge_position()
 		var enemy_type = _get_enemy_type()
-		spawn_requested.emit(pos, enemy_type)
-		enemies_to_spawn -= 1
-		enemies_alive += 1
-		spawn_timer = spawn_interval
+		for i in horde_size:
+			var offset = Vector2(randf_range(-80, 80), randf_range(-80, 80))
+			spawn_requested.emit(base_pos + offset, enemy_type)
+			enemies_to_spawn -= 1
+			enemies_alive += 1
+		spawn_timer = spawn_interval * horde_size * 0.5
 
 	# All enemies killed before timer — buy phase with bonus
 	if enemies_alive <= 0 and enemies_to_spawn <= 0:

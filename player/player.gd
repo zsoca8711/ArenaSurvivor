@@ -16,13 +16,13 @@ const DAMAGE_COOLDOWN_TIME = 0.5
 
 # Weapon system
 const WEAPONS = {
-	"pistol": {"name": "Pistol", "damage": 10, "fire_rate": 0.3, "speed": 800, "spread": 0.0, "bullets": 1, "lifetime": 3.0, "aoe": 0.0, "color": Color(1, 0.9, 0.2)},
-	"shotgun": {"name": "Shotgun", "damage": 8, "fire_rate": 0.8, "speed": 600, "spread": 15.0, "bullets": 5, "lifetime": 1.5, "aoe": 0.0, "color": Color(1, 0.6, 0.2)},
-	"smg": {"name": "SMG", "damage": 6, "fire_rate": 0.08, "speed": 700, "spread": 5.0, "bullets": 1, "lifetime": 3.0, "aoe": 0.0, "color": Color(0.8, 0.8, 0.2)},
-	"rifle": {"name": "Rifle", "damage": 40, "fire_rate": 1.2, "speed": 1200, "spread": 0.0, "bullets": 1, "lifetime": 3.0, "aoe": 0.0, "color": Color(0.3, 0.9, 1.0)},
-	"rocket_launcher": {"name": "Rocket Launcher", "damage": 80, "fire_rate": 2.0, "speed": 400, "spread": 0.0, "bullets": 1, "lifetime": 5.0, "aoe": 120.0, "color": Color(1, 0.3, 0.1)},
-	"flamethrower": {"name": "Flamethrower", "damage": 3, "fire_rate": 0.03, "speed": 300, "spread": 12.0, "bullets": 1, "lifetime": 0.4, "aoe": 0.0, "color": Color(1, 0.5, 0.0)},
-	"minigun": {"name": "Minigun", "damage": 12, "fire_rate": 0.05, "speed": 750, "spread": 8.0, "bullets": 1, "lifetime": 3.0, "aoe": 0.0, "color": Color(0.7, 0.7, 0.7)},
+	"pistol": {"name": "Pistol", "damage": 10, "fire_rate": 0.3, "speed": 800, "spread": 0.0, "bullets": 1, "lifetime": 3.0, "aoe": 0.0, "color": Color(1, 0.9, 0.2), "max_ammo": -1},
+	"shotgun": {"name": "Shotgun", "damage": 8, "fire_rate": 0.8, "speed": 600, "spread": 15.0, "bullets": 5, "lifetime": 1.5, "aoe": 0.0, "color": Color(1, 0.6, 0.2), "max_ammo": 60},
+	"smg": {"name": "SMG", "damage": 6, "fire_rate": 0.08, "speed": 700, "spread": 5.0, "bullets": 1, "lifetime": 3.0, "aoe": 0.0, "color": Color(0.8, 0.8, 0.2), "max_ammo": 400},
+	"rifle": {"name": "Rifle", "damage": 40, "fire_rate": 1.2, "speed": 1200, "spread": 0.0, "bullets": 1, "lifetime": 3.0, "aoe": 0.0, "color": Color(0.3, 0.9, 1.0), "max_ammo": 40},
+	"rocket_launcher": {"name": "Rocket Launcher", "damage": 80, "fire_rate": 2.0, "speed": 400, "spread": 0.0, "bullets": 1, "lifetime": 5.0, "aoe": 120.0, "color": Color(1, 0.3, 0.1), "max_ammo": 20},
+	"flamethrower": {"name": "Flamethrower", "damage": 3, "fire_rate": 0.03, "speed": 300, "spread": 12.0, "bullets": 1, "lifetime": 0.4, "aoe": 0.0, "color": Color(1, 0.5, 0.0), "max_ammo": 500},
+	"minigun": {"name": "Minigun", "damage": 12, "fire_rate": 0.05, "speed": 750, "spread": 8.0, "bullets": 1, "lifetime": 3.0, "aoe": 0.0, "color": Color(0.7, 0.7, 0.7), "max_ammo": 800},
 }
 
 var weapons_owned: Dictionary = {"pistol": -1}  # weapon_id -> ammo (-1 = infinite)
@@ -117,24 +117,26 @@ func _switch_weapon(direction: int):
 
 
 func add_weapon(weapon_id: String, ammo: int):
+	var max_ammo = WEAPONS[weapon_id]["max_ammo"]
 	if weapons_owned.has(weapon_id):
-		# Already owned — add ammo
 		if weapons_owned[weapon_id] >= 0:
-			weapons_owned[weapon_id] += ammo
+			weapons_owned[weapon_id] = mini(weapons_owned[weapon_id] + ammo, max_ammo)
 	else:
-		weapons_owned[weapon_id] = ammo
+		weapons_owned[weapon_id] = mini(ammo, max_ammo)
 	current_weapon = weapon_id
 
 
 func add_ammo(amount: int):
 	# Add ammo to current weapon if it uses ammo
 	if weapons_owned[current_weapon] >= 0:
-		weapons_owned[current_weapon] += amount
+		var max_a = WEAPONS[current_weapon]["max_ammo"]
+		weapons_owned[current_weapon] = mini(weapons_owned[current_weapon] + amount, max_a)
 		return
 	# Otherwise find first weapon that needs ammo
 	for weapon_id in weapons_owned:
 		if weapons_owned[weapon_id] >= 0:
-			weapons_owned[weapon_id] += amount
+			var max_a = WEAPONS[weapon_id]["max_ammo"]
+			weapons_owned[weapon_id] = mini(weapons_owned[weapon_id] + amount, max_a)
 			return
 
 

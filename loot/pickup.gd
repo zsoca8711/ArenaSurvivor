@@ -25,7 +25,15 @@ var lifetime: float = 15.0
 
 func _ready():
 	$Body.color = COLORS.get(pickup_type, Color.WHITE)
+	_spawn_drop_text()
 	get_tree().create_timer(lifetime).timeout.connect(queue_free)
+
+
+func _spawn_drop_text():
+	# Floating text showing what dropped
+	var text = NAMES.get(pickup_type, "???")
+	var color = COLORS.get(pickup_type, Color.WHITE)
+	_create_floating_text(global_position, text, color)
 
 
 func _on_body_entered(body: Node2D):
@@ -35,12 +43,17 @@ func _on_body_entered(body: Node2D):
 
 
 func _apply(player):
+	var pickup_text = ""
+	var pickup_color = COLORS.get(pickup_type, Color.WHITE)
+
 	match pickup_type:
 		PickupType.HEALTH:
 			player.hp = min(player.hp + 30, player.max_hp)
 			GameManager.health_changed.emit(player.hp, player.max_hp)
+			pickup_text = "+30 HP"
 		PickupType.AMMO:
 			player.add_ammo(30)
+			pickup_text = "+30 Ammo"
 		PickupType.SPEED_BOOST:
 			player.speed += 80
 			get_tree().create_timer(5.0).timeout.connect(
@@ -48,6 +61,7 @@ func _apply(player):
 					if is_instance_valid(player):
 						player.speed -= 80
 			)
+			pickup_text = "Speed Up! (5s)"
 		PickupType.DAMAGE_BOOST:
 			player.damage_bonus += 8
 			get_tree().create_timer(5.0).timeout.connect(
@@ -55,9 +69,29 @@ func _apply(player):
 					if is_instance_valid(player):
 						player.damage_bonus -= 8
 			)
+			pickup_text = "Damage Up! (5s)"
 		PickupType.MONEY:
 			var amount = _random_money()
 			GameManager.add_money(amount)
+			pickup_text = "+$%d" % amount
+
+	_create_floating_text(global_position, pickup_text, pickup_color)
+
+
+func _create_floating_text(pos: Vector2, text: String, color: Color):
+	var label = Label.new()
+	label.text = text
+	label.global_position = pos + Vector2(-30, -20)
+	label.add_theme_font_size_override("font_size", 16)
+	label.add_theme_color_override("font_color", color)
+	label.z_index = 100
+	get_tree().current_scene.add_child(label)
+	# Float up and fade out
+	var tween = label.create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(label, "position:y", label.position.y - 40, 1.5)
+	tween.tween_property(label, "modulate:a", 0.0, 1.5)
+	tween.chain().tween_callback(label.queue_free)
 
 
 func _random_money() -> int:
