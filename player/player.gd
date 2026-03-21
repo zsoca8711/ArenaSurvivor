@@ -24,6 +24,7 @@ const WEAPONS = {
 	"flamethrower": {"name": "Flamethrower", "damage": 3, "fire_rate": 0.03, "speed": 300, "spread": 12.0, "bullets": 1, "lifetime": 0.4, "aoe": 0.0, "color": Color(1, 0.5, 0.0)},
 	"minigun": {"name": "Minigun", "damage": 12, "fire_rate": 0.05, "speed": 750, "spread": 8.0, "bullets": 1, "lifetime": 3.0, "aoe": 0.0, "color": Color(0.7, 0.7, 0.7)},
 	"radio_staff": {"name": "Radio Staff", "damage": 15, "fire_rate": 0.4, "speed": 600, "spread": 0.0, "bullets": 1, "lifetime": 5.0, "aoe": 0.0, "color": Color(0.1, 0.0, 0.1), "homing": true},
+	"megacluster_cannon": {"name": "Megacluster Cannon", "damage": 80, "fire_rate": 0.08, "speed": 500, "spread": 15.0, "bullets": 3, "lifetime": 4.0, "aoe": 120.0, "color": Color(1, 0.15, 0.0)},
 }
 
 var weapons_owned: Dictionary = {"pistol": -1}  # weapon_id -> ammo (-1 = infinite)
@@ -33,6 +34,10 @@ const SUMMON_COOLDOWN_TIME = 3.0
 var minion_scene = preload("res://player/minion.tscn")
 var radio_demon_scene = preload("res://player/radio_demon.tscn")
 var radio_staff_kills: int = 0
+var has_telekinetic: bool = false
+var telekinetic_cooldown: float = 0.0
+const TELEKINETIC_COOLDOWN_TIME = 10.0
+const TELEKINETIC_RADIUS = 100.0
 
 
 func _ready():
@@ -60,6 +65,7 @@ func _process(delta):
 	if _is_local():
 		_handle_shooting()
 		_handle_summon(delta)
+		_handle_telekinetic(delta)
 		_process_contact_damage(delta)
 
 
@@ -78,6 +84,36 @@ func _handle_summon(delta):
 		minion.owner_player = self
 		get_tree().current_scene.call_deferred("add_child", minion)
 		summon_cooldown = SUMMON_COOLDOWN_TIME
+
+
+func _handle_telekinetic(delta):
+	telekinetic_cooldown -= delta
+	if has_telekinetic and Input.is_action_just_pressed("ability_1") and telekinetic_cooldown <= 0:
+		telekinetic_cooldown = TELEKINETIC_COOLDOWN_TIME
+		# Kill everything in radius
+		for enemy in get_tree().get_nodes_in_group("enemies"):
+			if global_position.distance_to(enemy.global_position) <= TELEKINETIC_RADIUS:
+				enemy.take_damage(99999.0)
+		# Visual pulse
+		_spawn_telekinetic_wave()
+
+
+func _spawn_telekinetic_wave():
+	# Purple expanding circle effect
+	var wave = Polygon2D.new()
+	wave.color = Color(0.6, 0.1, 0.9, 0.5)
+	var points = PackedVector2Array()
+	for i in 24:
+		var angle = i * TAU / 24
+		points.append(Vector2(cos(angle) * TELEKINETIC_RADIUS, sin(angle) * TELEKINETIC_RADIUS))
+	wave.polygon = points
+	wave.global_position = global_position
+	wave.z_index = 10
+	get_tree().current_scene.add_child(wave)
+	var tween = wave.create_tween()
+	tween.tween_property(wave, "scale", Vector2(1.5, 1.5), 0.5)
+	tween.parallel().tween_property(wave, "modulate:a", 0.0, 0.5)
+	tween.chain().tween_callback(wave.queue_free)
 
 
 func on_radio_staff_kill():

@@ -12,10 +12,12 @@ var weapon_items = [
 	{"id": "flamethrower", "name": "Flamethrower", "price": 1500, "ammo": 300, "type": "weapon"},
 	{"id": "minigun", "name": "Minigun", "price": 3000, "ammo": 500, "type": "weapon"},
 	{"id": "radio_staff", "name": "Radio Staff (homing + summon)", "price": 4000, "ammo": 200, "type": "weapon"},
+	{"id": "megacluster_cannon", "name": "Megacluster Cannon", "price": 100000, "ammo": 0, "type": "weapon"},
 ]
 
 var special_items = [
 	{"id": "hire_demon", "name": "Hire Radio Demon (5s aura)", "price": 3000, "type": "special"},
+	{"id": "telekinetic", "name": "Telekinetic (key: 2, 10s cd)", "price": 50000, "type": "special"},
 ]
 
 var upgrade_items = [
@@ -249,3 +251,5 @@ func _apply_special(special_id: String, player):
 			get_tree().current_scene.call_deferred("add_child", demon)
 			# Activate after adding to tree
 			demon.call_deferred("activate_aura")
+		"telekinetic":
+			player.has_telekinetic = true
