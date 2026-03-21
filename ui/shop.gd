@@ -12,7 +12,7 @@ var weapon_items = [
 	{"id": "flamethrower", "name": "Flamethrower", "price": 1500, "ammo": 300, "type": "weapon"},
 	{"id": "minigun", "name": "Minigun", "price": 3000, "ammo": 500, "type": "weapon"},
 	{"id": "radio_staff", "name": "Radio Staff (homing + summon)", "price": 4000, "ammo": 200, "type": "weapon"},
-	{"id": "megacluster_cannon", "name": "Megacluster Cannon", "price": 100000, "ammo": 0, "type": "weapon"},
+	{"id": "megacluster_cannon", "name": "Megacluster Cannon", "price": 1000000, "ammo": 0, "type": "weapon"},
 ]
 
 var special_items = [
