@@ -15,6 +15,8 @@ var enemy_scenes = {
 var boss_scenes = {
 	"demogorgon": preload("res://enemies/boss_demogorgon.tscn"),
 	"giant_tank": preload("res://enemies/boss_giant_tank.tscn"),
+	"vecna": preload("res://enemies/boss_vecna.tscn"),
+	"mind_flayer": preload("res://enemies/boss_mind_flayer.tscn"),
 }
 
 var players: Dictionary = {}  # peer_id -> player node

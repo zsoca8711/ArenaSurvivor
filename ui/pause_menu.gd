@@ -73,6 +73,8 @@ func _build_ui():
 	_add_cheat_button(vbox, "Skip Wave", _on_cheat_skip_wave)
 	_add_cheat_button(vbox, "Summon Demogorgon", _on_cheat_demogorgon)
 	_add_cheat_button(vbox, "Summon Giant Tank", _on_cheat_giant_tank)
+	_add_cheat_button(vbox, "Summon Vecna", _on_cheat_vecna)
+	_add_cheat_button(vbox, "Summon Mind Flayer", _on_cheat_mind_flayer)
 
 
 func _add_button(parent: Control, text: String, callback: Callable):
@@ -138,19 +140,25 @@ func _on_cheat_skip_wave():
 
 
 func _on_cheat_demogorgon():
-	var player = get_tree().get_first_node_in_group("player")
-	if player:
-		var scene = preload("res://enemies/boss_demogorgon.tscn")
-		var boss = scene.instantiate()
-		boss.global_position = player.global_position + Vector2(300, 0)
-		get_tree().current_scene.get_node("Enemies").call_deferred("add_child", boss)
-		WaveManager.enemies_alive += 1
+	_spawn_cheat_boss("res://enemies/boss_demogorgon.tscn")
 
 
 func _on_cheat_giant_tank():
+	_spawn_cheat_boss("res://enemies/boss_giant_tank.tscn")
+
+
+func _on_cheat_vecna():
+	_spawn_cheat_boss("res://enemies/boss_vecna.tscn")
+
+
+func _on_cheat_mind_flayer():
+	_spawn_cheat_boss("res://enemies/boss_mind_flayer.tscn")
+
+
+func _spawn_cheat_boss(scene_path: String):
 	var player = get_tree().get_first_node_in_group("player")
 	if player:
-		var scene = preload("res://enemies/boss_giant_tank.tscn")
+		var scene = load(scene_path)
 		var boss = scene.instantiate()
 		boss.global_position = player.global_position + Vector2(300, 0)
 		get_tree().current_scene.get_node("Enemies").call_deferred("add_child", boss)

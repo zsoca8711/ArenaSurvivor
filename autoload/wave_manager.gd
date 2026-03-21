@@ -187,10 +187,14 @@ func _get_enemy_type() -> String:
 
 
 func _get_boss_type() -> String:
-	# Demogorgon is rare (20% chance), Giant Tank is common (80%)
-	if randf() < 0.2:
-		return "demogorgon"
-	return "giant_tank"
+	var roll = randf()
+	if roll < 0.10:
+		return "demogorgon"   # 10% — rarest
+	elif roll < 0.25:
+		return "vecna"        # 15%
+	elif roll < 0.45:
+		return "mind_flayer"  # 20%
+	return "giant_tank"       # 55% — most common
 
 
 func _get_max_horde(enemy_type: String) -> int:
