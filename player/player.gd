@@ -274,9 +274,24 @@ func take_damage(amount: float):
 
 
 func _die():
+	if GameManager.story_mode:
+		_story_respawn()
+		return
 	is_dead = true
 	$Body.modulate = Color(0.5, 0.5, 0.5, 0.5)
 	GameManager.on_player_died()
+
+
+func _story_respawn():
+	# Respawn at full HP, keep current quest step
+	hp = max_hp
+	GameManager.health_changed.emit(hp, max_hp)
+	$Body.modulate = Color(1, 1, 1, 0.3)
+	get_tree().create_timer(0.5).timeout.connect(
+		func():
+			if is_instance_valid(self):
+				$Body.modulate = Color(1, 1, 1)
+	)
 
 
 func _boss_death():
