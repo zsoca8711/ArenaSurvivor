@@ -57,7 +57,16 @@ func _can_open_shop() -> bool:
 	if GameManager.story_mode:
 		# Story mode: only in safe zone, and only after reaching step 2+
 		var player = get_tree().get_first_node_in_group("player")
-		return player and player.in_safe_zone and GameManager.story_step >= 2
+		if not player or GameManager.story_step < 2:
+			return false
+		# Check in_safe_zone flag OR manually check distance to safe zones
+		if player.in_safe_zone:
+			return true
+		for zone in get_tree().get_nodes_in_group("safe_zones"):
+			var half = zone.zone_size / 2.0
+			if abs(player.global_position.x - zone.global_position.x) < half.x and abs(player.global_position.y - zone.global_position.y) < half.y:
+				return true
+		return false
 	else:
 		return WaveManager.buy_phase_active
 

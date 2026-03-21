@@ -3,7 +3,7 @@ extends Area2D
 # Safe zone — no shooting, enemies can't enter
 # Enemies are pushed away from the zone boundary
 
-var zone_size: Vector2 = Vector2(200, 200)
+var zone_size: Vector2 = Vector2(300, 300)
 var farmhouse_tex = preload("res://assets/sprites/farmhouse.png")
 var farm_fence_tex = preload("res://assets/sprites/farm_fence.png")
 var farm_hay_tex = preload("res://assets/sprites/farm_hay.png")
