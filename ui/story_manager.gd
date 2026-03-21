@@ -425,66 +425,111 @@ func _launch_rocket():
 
 func _show_win_screen():
 	GameManager.story_step = 14
+	get_tree().paused = true
+	process_mode = Node.PROCESS_MODE_ALWAYS
 
+	# Full black background
 	var overlay = ColorRect.new()
-	overlay.color = Color(0, 0, 0, 0.8)
+	overlay.color = Color(0, 0, 0, 1)
 	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(overlay)
 
-	var center = CenterContainer.new()
-	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(center)
+	# Credits container — starts below screen and scrolls up
+	var credits = VBoxContainer.new()
+	credits.alignment = BoxContainer.ALIGNMENT_CENTER
+	credits.add_theme_constant_override("separation", 40)
+	credits.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	credits.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	credits.modulate.a = 0.0
+	add_child(credits)
 
-	var vbox = VBoxContainer.new()
-	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	vbox.add_theme_constant_override("separation", 15)
-	vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	center.add_child(vbox)
+	# Title
+	_add_credit(credits, "THE END", 72, Color(1, 0.85, 0))
 
-	var title = Label.new()
-	title.text = "YOU WON!"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 72)
-	title.add_theme_color_override("font_color", Color(1, 0.85, 0))
-	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	vbox.add_child(title)
+	# Spacer
+	var sp1 = Control.new()
+	sp1.custom_minimum_size = Vector2(0, 30)
+	sp1.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	credits.add_child(sp1)
 
-	var sub = Label.new()
-	sub.text = "The rocket destroyed the monster horde!\nThe world is saved!"
-	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	sub.add_theme_font_size_override("font_size", 24)
-	sub.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	vbox.add_child(sub)
+	_add_credit(credits, "The rocket destroyed the monster horde.", 24, Color(0.8, 0.8, 0.8))
+	_add_credit(credits, "The world is saved.", 24, Color(0.8, 0.8, 0.8))
 
-	var stats = Label.new()
-	stats.text = "Score: $%d | Total Kills: %d" % [GameManager.score, GameManager.kills]
-	stats.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	stats.add_theme_font_size_override("font_size", 20)
-	stats.add_theme_color_override("font_color", Color(1, 0.85, 0))
-	stats.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	vbox.add_child(stats)
+	var sp2 = Control.new()
+	sp2.custom_minimum_size = Vector2(0, 50)
+	sp2.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	credits.add_child(sp2)
 
-	var sp = Control.new()
-	sp.custom_minimum_size = Vector2(0, 20)
-	sp.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	vbox.add_child(sp)
+	# Credits
+	_add_credit(credits, "--- CREDITS ---", 28, Color(1, 0.85, 0))
 
-	var btn = Button.new()
-	btn.text = "Main Menu"
-	btn.custom_minimum_size = Vector2(220, 50)
-	btn.add_theme_font_size_override("font_size", 24)
-	btn.pressed.connect(func():
-		get_tree().paused = false
-		GameManager.reset()
-		WaveManager.reset()
-		NetworkManager.disconnect_from_game()
-		get_tree().change_scene_to_file("res://ui/main_menu.tscn")
+	var sp3 = Control.new()
+	sp3.custom_minimum_size = Vector2(0, 20)
+	sp3.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	credits.add_child(sp3)
+
+	_add_credit(credits, "Otletgazda", 20, Color(0.6, 0.6, 0.6))
+	_add_credit(credits, "Janos Zsolt", 36, Color(1, 1, 1))
+
+	var sp4 = Control.new()
+	sp4.custom_minimum_size = Vector2(0, 20)
+	sp4.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	credits.add_child(sp4)
+
+	_add_credit(credits, "Fotervezo", 20, Color(0.6, 0.6, 0.6))
+	_add_credit(credits, "Janos-Kevey Miklos", 36, Color(1, 1, 1))
+
+	var sp5 = Control.new()
+	sp5.custom_minimum_size = Vector2(0, 20)
+	sp5.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	credits.add_child(sp5)
+
+	_add_credit(credits, "Programozo", 20, Color(0.6, 0.6, 0.6))
+	_add_credit(credits, "Claude", 36, Color(1, 1, 1))
+
+	var sp6 = Control.new()
+	sp6.custom_minimum_size = Vector2(0, 40)
+	sp6.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	credits.add_child(sp6)
+
+	_add_credit(credits, "Score: $%d | Total Kills: %d" % [GameManager.score, GameManager.kills], 22, Color(1, 0.85, 0))
+
+	var sp7 = Control.new()
+	sp7.custom_minimum_size = Vector2(0, 30)
+	sp7.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	credits.add_child(sp7)
+
+	_add_credit(credits, "Koszonjuk hogy jatszottal!", 28, Color(1, 0.85, 0))
+
+	# Fade in credits
+	var tween = credits.create_tween()
+	tween.tween_property(credits, "modulate:a", 1.0, 2.0)
+
+	# Main menu button after credits
+	get_tree().create_timer(8.0).timeout.connect(func():
+		var btn = Button.new()
+		btn.text = "Main Menu"
+		btn.custom_minimum_size = Vector2(220, 50)
+		btn.add_theme_font_size_override("font_size", 24)
+		btn.pressed.connect(func():
+			get_tree().paused = false
+			GameManager.reset()
+			WaveManager.reset()
+			NetworkManager.disconnect_from_game()
+			get_tree().change_scene_to_file("res://ui/main_menu.tscn")
+		)
+		credits.add_child(btn)
 	)
-	vbox.add_child(btn)
 
-	get_tree().paused = true
-	process_mode = Node.PROCESS_MODE_ALWAYS
+
+func _add_credit(parent: Control, text: String, size: int, color: Color):
+	var label = Label.new()
+	label.text = text
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", size)
+	label.add_theme_color_override("font_color", color)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(label)
 
 
 func _show_message(text: String):
