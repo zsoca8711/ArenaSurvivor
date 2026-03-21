@@ -341,8 +341,8 @@ func _create_forest_extras():
 func _create_battlefield_extras():
 	var arena = GameManager.ARENA_SIZE
 
-	# Tank tracks EVERYWHERE (300 — covers the whole map)
-	for i in 300:
+	# Tank tracks EVERYWHERE (600)
+	for i in 600:
 		var spr = Sprite2D.new()
 		spr.texture = [tracks_double, tracks_large, tracks_small][randi() % 3]
 		spr.position = Vector2(randf_range(50, arena.x - 50), randf_range(50, arena.y - 50))
@@ -350,13 +350,13 @@ func _create_battlefield_extras():
 		spr.z_index = -7
 		add_child(spr)
 
-	# Wire fences everywhere (150)
-	for i in 150:
+	# Wire fences everywhere (300)
+	for i in 300:
 		var tex = [wire_crooked, wire_straight][randi() % 2]
 		_place_obstacle(_random_pos_outside_fortress(), tex, Vector2(40, 10))
 
 	# Wire fence lines (long rows)
-	for i in 20:
+	for i in 40:
 		var start = _random_pos_outside_fortress()
 		var horizontal = randf() > 0.5
 		for j in randi_range(4, 12):
@@ -364,8 +364,8 @@ func _create_battlefield_extras():
 			var tex = [wire_crooked, wire_straight][randi() % 2]
 			_place_obstacle(start + offset, tex, Vector2(40, 10))
 
-	# Tank wreckage / special barrels (100)
-	for i in 100:
+	# Tank wreckage / special barrels (200)
+	for i in 200:
 		var spr = Sprite2D.new()
 		spr.texture = [special_barrel1, special_barrel2, special_barrel3][randi() % 3]
 		spr.position = _random_pos_outside_fortress()
@@ -373,8 +373,8 @@ func _create_battlefield_extras():
 		spr.z_index = 0
 		add_child(spr)
 
-	# Sandbag fortifications (40)
-	for i in 40:
+	# Sandbag fortifications (80)
+	for i in 80:
 		var start = _random_pos_outside_fortress()
 		var horizontal = randf() > 0.5
 		for j in randi_range(3, 8):
@@ -382,20 +382,20 @@ func _create_battlefield_extras():
 			var tex = [sandbag_tex, sandbag_beige, sandbag_open][randi() % 3]
 			_place_obstacle(start + offset, tex, Vector2(36, 22))
 
-	# Barrel clusters (40)
-	for i in 40:
+	# Barrel clusters (80)
+	for i in 80:
 		var center = _random_pos_outside_fortress()
 		for j in randi_range(2, 5):
 			var tex = [barrel_tex, barrel_red, barrel_rust, barrel_black, barrel_green][randi() % 5]
 			_place_obstacle(center + Vector2(randf_range(-25, 25), randf_range(-25, 25)), tex, Vector2(22, 22))
 
-	# Crates (30)
-	for i in 30:
+	# Crates (60)
+	for i in 60:
 		var tex = [crate_tex, crate_metal, crate_wood_side, crate_metal_side][randi() % 4]
 		_place_obstacle(_random_pos_outside_fortress(), tex, Vector2(34, 34))
 
-	# Barricades (30)
-	for i in 30:
+	# Barricades (60)
+	for i in 60:
 		var tex = [barricade_tex, barricade_wood][randi() % 2]
 		_place_obstacle(_random_pos_outside_fortress(), tex, Vector2(50, 50))
 
