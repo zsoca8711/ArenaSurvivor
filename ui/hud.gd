@@ -91,19 +91,14 @@ func _build_ui():
 	center.add_child(center_message)
 
 	# Skip shop button (bottom center, hidden by default)
-	var skip_margin = MarginContainer.new()
-	skip_margin.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
-	skip_margin.add_theme_constant_override("margin_bottom", 60)
-	skip_margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(skip_margin)
-
 	skip_shop_btn = Button.new()
 	skip_shop_btn.text = "Skip Shop Phase"
-	skip_shop_btn.custom_minimum_size = Vector2(200, 45)
-	skip_shop_btn.add_theme_font_size_override("font_size", 20)
+	skip_shop_btn.custom_minimum_size = Vector2(220, 50)
+	skip_shop_btn.add_theme_font_size_override("font_size", 22)
 	skip_shop_btn.pressed.connect(_on_skip_shop)
 	skip_shop_btn.visible = false
-	skip_margin.add_child(skip_shop_btn)
+	skip_shop_btn.position = Vector2(850, 980)
+	add_child(skip_shop_btn)
 
 	# Fortress direction arrow
 	fortress_arrow = Label.new()
