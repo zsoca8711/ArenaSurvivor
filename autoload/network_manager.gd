@@ -49,15 +49,20 @@ func join_by_code(code: String):
 	_search_code = code
 	_searching = true
 	_udp_listen = PacketPeerUDP.new()
-	_udp_listen.bind(BROADCAST_PORT)
+	_udp_listen.set_broadcast_enabled(true)
+	var err = _udp_listen.bind(BROADCAST_PORT, "*")
+	if err != OK:
+		# Port might be in use, try alternative
+		_udp_listen.bind(BROADCAST_PORT, "0.0.0.0")
 
 
 func _process(delta):
-	# Host: broadcast room code
+	# Host: broadcast room code + IP
 	if is_host and _udp_broadcast:
 		_broadcast_timer -= delta
 		if _broadcast_timer <= 0:
-			var msg = "ARENA:%s:%d" % [room_code, GAME_PORT]
+			var local_ip = _get_local_ip()
+			var msg = "ARENA:%s:%s:%d" % [room_code, local_ip, GAME_PORT]
 			_udp_broadcast.put_packet(msg.to_utf8_buffer())
 			_broadcast_timer = BROADCAST_INTERVAL
 
@@ -65,10 +70,11 @@ func _process(delta):
 	if _searching and _udp_listen:
 		while _udp_listen.get_available_packet_count() > 0:
 			var data = _udp_listen.get_packet().get_string_from_utf8()
-			var ip = _udp_listen.get_packet_ip()
 			if data.begins_with("ARENA:" + _search_code + ":"):
 				var parts = data.split(":")
-				var port = int(parts[2])
+				# Format: ARENA:CODE:IP:PORT
+				var ip = parts[2]
+				var port = int(parts[3])
 				_searching = false
 				_udp_listen.close()
 				_udp_listen = null

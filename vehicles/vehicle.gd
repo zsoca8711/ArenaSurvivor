@@ -10,6 +10,7 @@ var hp: float
 var occupied: bool = false
 var driver: Node2D = null
 var is_destroyed: bool = false
+var enter_cooldown: float = 0.0
 var explode_timer: float = -1.0
 var laser_line: Line2D
 var tank_fire_cooldown: float = 0.0
@@ -73,8 +74,9 @@ func _process(delta):
 	# Contact damage handling
 	_handle_vehicle_damage(delta)
 
-	# Exit with F
-	if Input.is_action_just_pressed("enter_vehicle"):
+	# Exit with F (cooldown prevents instant exit after entering)
+	enter_cooldown -= delta
+	if Input.is_action_just_pressed("enter_vehicle") and enter_cooldown <= 0:
 		exit_vehicle()
 
 
@@ -127,6 +129,7 @@ func enter_vehicle(player: Node2D):
 	if occupied or is_destroyed:
 		return
 	occupied = true
+	enter_cooldown = 0.5
 	driver = player
 	driver.visible = false
 	driver.set_physics_process(false)

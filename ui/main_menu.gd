@@ -247,14 +247,14 @@ func _on_multiplayer():
 
 func _on_create_game():
 	if NetworkManager.create_server():
-		status_label.text = "Room code: %s\nIP: %s\nWaiting for players..." % [
+		status_label.text = "Room code: %s\nIP: %s\nWaiting for players...\n\nShare this code with friends on the same network!" % [
 			NetworkManager.room_code,
 			NetworkManager._get_local_ip()
 		]
 		if not NetworkManager.player_connected.is_connected(_on_player_joined):
 			NetworkManager.player_connected.connect(_on_player_joined)
 	else:
-		status_label.text = "Failed to create server!"
+		status_label.text = "Failed to create server!\nPort may be in use."
 
 
 func _on_player_joined(_id: int):
@@ -273,12 +273,21 @@ func _on_join_game():
 	if code.length() != 5 or not code.is_valid_int():
 		status_label.text = "Enter a valid 5-digit code"
 		return
-	status_label.text = "Searching for room %s..." % code
+	status_label.text = "Searching for room %s...\n(Make sure host is on same network)" % code
 	if not NetworkManager.joined_server.is_connected(_on_joined_server):
 		NetworkManager.joined_server.connect(_on_joined_server)
 	if not NetworkManager.join_failed.is_connected(_on_join_failed):
 		NetworkManager.join_failed.connect(_on_join_failed)
 	NetworkManager.join_by_code(code)
+	# Timeout after 10 seconds
+	get_tree().create_timer(10.0).timeout.connect(func():
+		if NetworkManager._searching:
+			NetworkManager._searching = false
+			if NetworkManager._udp_listen:
+				NetworkManager._udp_listen.close()
+				NetworkManager._udp_listen = null
+			status_label.text = "Room not found! Check code and network."
+	)
 
 
 func _on_joined_server():
