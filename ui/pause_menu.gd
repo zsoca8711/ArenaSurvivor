@@ -9,6 +9,16 @@ func _ready():
 	process_mode = Node.PROCESS_MODE_ALWAYS
 
 
+func _input(event):
+	if event.is_action_pressed("pause"):
+		if is_open:
+			close()
+			get_viewport().set_input_as_handled()
+		elif not get_tree().paused:
+			open()
+			get_viewport().set_input_as_handled()
+
+
 func _build_ui():
 	var overlay = ColorRect.new()
 	overlay.color = Color(0, 0, 0, 0.6)
