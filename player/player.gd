@@ -61,7 +61,7 @@ func _handle_movement():
 	var input = Vector2.ZERO
 	input.x = Input.get_axis("move_left", "move_right")
 	input.y = Input.get_axis("move_up", "move_down")
-	velocity = input.normalized() * speed
+	velocity = input.normalized() * min(speed, 200.0)
 	move_and_slide()
 
 
