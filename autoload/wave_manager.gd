@@ -20,7 +20,7 @@ var spawn_timer: float = 0.0
 var spawn_interval: float = 1.0
 
 const BUY_PHASE_DURATION = 20.0
-const WAVE_DURATION = 180.0
+const WAVE_DURATION = 30.0
 const BASE_SPAWN_INTERVAL = 3.0   # seconds between hordes at wave 1
 const MIN_SPAWN_INTERVAL = 0.4    # fastest spawn rate
 const SPAWN_SPEEDUP = 0.15        # seconds faster per wave
