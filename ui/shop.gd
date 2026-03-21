@@ -11,7 +11,11 @@ var weapon_items = [
 	{"id": "rocket_launcher", "name": "Rocket Launcher", "price": 2000, "ammo": 10, "type": "weapon"},
 	{"id": "flamethrower", "name": "Flamethrower", "price": 1500, "ammo": 300, "type": "weapon"},
 	{"id": "minigun", "name": "Minigun", "price": 3000, "ammo": 500, "type": "weapon"},
-	{"id": "wand", "name": "Wand (homing + summon)", "price": 4000, "ammo": 200, "type": "weapon"},
+	{"id": "radio_staff", "name": "Radio Staff (homing + summon)", "price": 4000, "ammo": 200, "type": "weapon"},
+]
+
+var special_items = [
+	{"id": "hire_demon", "name": "Hire Radio Demon (5s aura)", "price": 3000, "type": "special"},
 ]
 
 var upgrade_items = [
@@ -109,6 +113,23 @@ func _build_ui():
 	for item in upgrade_items:
 		_add_item_row_to(upgrade_container, item)
 
+	# Special header
+	var sh = Label.new()
+	sh.text = "-- Special --"
+	sh.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	sh.add_theme_font_size_override("font_size", 18)
+	sh.add_theme_color_override("font_color", Color(0.9, 0.3, 0.9))
+	sh.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(sh)
+
+	var special_container = VBoxContainer.new()
+	special_container.add_theme_constant_override("separation", 4)
+	special_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(special_container)
+
+	for item in special_items:
+		_add_item_row_to(special_container, item)
+
 	var spacer = Control.new()
 	spacer.custom_minimum_size = Vector2(0, 8)
 	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -185,6 +206,8 @@ func _on_buy(item: Dictionary):
 		return
 	if item["type"] == "weapon":
 		player.add_weapon(item["id"], item["ammo"])
+	elif item["type"] == "special":
+		_apply_special(item["id"], player)
 	else:
 		_apply_upgrade(item["id"], player)
 	_update_money()
@@ -207,3 +230,22 @@ func _apply_upgrade(upgrade_id: String, player):
 			GameManager.health_changed.emit(player.hp, player.max_hp)
 		"speed":
 			player.speed += 30.0
+
+
+func _apply_special(special_id: String, player):
+	match special_id:
+		"hire_demon":
+			# Find existing radio demon or spawn one
+			var demons = get_tree().get_nodes_in_group("minions")
+			for d in demons:
+				if d.has_method("activate_aura"):
+					d.activate_aura()
+					return
+			# No demon found — spawn and activate
+			var demon_scene = preload("res://player/radio_demon.tscn")
+			var demon = demon_scene.instantiate()
+			demon.global_position = player.global_position + Vector2(50, 0)
+			demon.owner_player = player
+			get_tree().current_scene.call_deferred("add_child", demon)
+			# Activate after adding to tree
+			demon.call_deferred("activate_aura")
