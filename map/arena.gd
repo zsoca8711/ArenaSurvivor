@@ -1,33 +1,87 @@
 extends Node2D
 
+const TILE = 64
 const WALL_THICKNESS = 50.0
-const WALL_COLOR = Color(0.35, 0.3, 0.25)
-const GROUND_COLOR = Color(0.18, 0.22, 0.12)
-const OBSTACLE_COLOR = Color(0.45, 0.42, 0.35)
+
+# Textures
+var grass1 = preload("res://assets/sprites/tile_grass1.png")
+var grass2 = preload("res://assets/sprites/tile_grass2.png")
+var sand1 = preload("res://assets/sprites/tile_sand1.png")
+var sand2 = preload("res://assets/sprites/tile_sand2.png")
+var road_n = preload("res://assets/sprites/road_north.png")
+var road_e = preload("res://assets/sprites/road_east.png")
+var road_x = preload("res://assets/sprites/road_crossing.png")
+var road_cll = preload("res://assets/sprites/road_corner_ll.png")
+var road_clr = preload("res://assets/sprites/road_corner_lr.png")
+var road_cul = preload("res://assets/sprites/road_corner_ul.png")
+var road_cur = preload("res://assets/sprites/road_corner_ur.png")
+var road_sn = preload("res://assets/sprites/road_split_n.png")
+var road_ss = preload("res://assets/sprites/road_split_s.png")
+var road_se = preload("res://assets/sprites/road_split_e.png")
+var road_sw = preload("res://assets/sprites/road_split_w.png")
+var tree_large = preload("res://assets/sprites/tree_large.png")
+var tree_small = preload("res://assets/sprites/tree_small.png")
+var tree_br_large = preload("res://assets/sprites/tree_brown_large.png")
+var tree_br_small = preload("res://assets/sprites/tree_brown_small.png")
+var tree_twigs = preload("res://assets/sprites/tree_twigs.png")
+var sandbag_tex = preload("res://assets/sprites/sandbag.png")
+var sandbag_beige = preload("res://assets/sprites/sandbag_beige.png")
+var barricade_tex = preload("res://assets/sprites/barricade.png")
+var barricade_wood = preload("res://assets/sprites/barricade_wood.png")
+var crate_tex = preload("res://assets/sprites/crate.png")
+var crate_metal = preload("res://assets/sprites/crate_metal.png")
+var barrel_tex = preload("res://assets/sprites/barrel.png")
+var barrel_red = preload("res://assets/sprites/barrel_red.png")
+var barrel_green = preload("res://assets/sprites/barrel_green.png")
+var fence_tex = preload("res://assets/sprites/fence.png")
+var fence_yellow = preload("res://assets/sprites/fence_yellow.png")
+var oil_large = preload("res://assets/sprites/oil_large.png")
+var oil_small = preload("res://assets/sprites/oil_small.png")
+
+# Road grid positions
+var h_roads = [1500, 3500, 5000, 6500, 8500]
+var v_roads = [1500, 3500, 5000, 6500, 8500]
 
 
 func _ready():
 	_create_ground()
 	_create_boundaries()
-	_create_obstacles()
+	_create_road_network()
+	_create_roadside_trees()
+	_create_scattered_decorations()
+	_create_fortress()
 
 
+# --- GROUND ---
 func _create_ground():
-	var ground = ColorRect.new()
-	ground.color = GROUND_COLOR
+	# Tiled grass using TextureRect for performance
+	var ground = TextureRect.new()
+	ground.texture = grass1
+	ground.stretch_mode = TextureRect.STRETCH_TILE
 	ground.size = GameManager.ARENA_SIZE
+	ground.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
 	ground.z_index = -10
+	ground.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(ground)
+	# Sandy patches
+	for i in 40:
+		var patch = Sprite2D.new()
+		patch.texture = [sand1, sand2][randi() % 2]
+		patch.position = Vector2(randf_range(100, 9900), randf_range(100, 9900))
+		patch.scale = Vector2(2, 2)
+		patch.z_index = -9
+		add_child(patch)
 
 
+# --- BOUNDARIES ---
 func _create_boundaries():
-	var hw = WALL_THICKNESS / 2.0
 	var ax = GameManager.ARENA_SIZE.x
 	var ay = GameManager.ARENA_SIZE.y
-	_create_wall(Vector2(ax / 2, -hw), Vector2(ax + WALL_THICKNESS * 2, WALL_THICKNESS))
-	_create_wall(Vector2(ax / 2, ay + hw), Vector2(ax + WALL_THICKNESS * 2, WALL_THICKNESS))
-	_create_wall(Vector2(-hw, ay / 2), Vector2(WALL_THICKNESS, ay + WALL_THICKNESS * 2))
-	_create_wall(Vector2(ax + hw, ay / 2), Vector2(WALL_THICKNESS, ay + WALL_THICKNESS * 2))
+	var hw = WALL_THICKNESS / 2.0
+	_create_wall(Vector2(ax/2, -hw), Vector2(ax + WALL_THICKNESS*2, WALL_THICKNESS))
+	_create_wall(Vector2(ax/2, ay+hw), Vector2(ax + WALL_THICKNESS*2, WALL_THICKNESS))
+	_create_wall(Vector2(-hw, ay/2), Vector2(WALL_THICKNESS, ay + WALL_THICKNESS*2))
+	_create_wall(Vector2(ax+hw, ay/2), Vector2(WALL_THICKNESS, ay + WALL_THICKNESS*2))
 
 
 func _create_wall(pos: Vector2, size: Vector2):
@@ -41,41 +95,212 @@ func _create_wall(pos: Vector2, size: Vector2):
 	shape.shape = rect
 	wall.add_child(shape)
 	var visual = ColorRect.new()
-	visual.color = WALL_COLOR
+	visual.color = Color(0.3, 0.25, 0.2)
 	visual.size = size
 	visual.position = -size / 2
 	wall.add_child(visual)
 	add_child(wall)
 
 
-func _create_obstacles():
-	# Central rock formation
-	_create_obstacle(Vector2(2500, 2500), Vector2(200, 200))
-	# Corner clusters
-	_create_obstacle(Vector2(1000, 1000), Vector2(150, 300))
-	_create_obstacle(Vector2(4000, 1000), Vector2(300, 150))
-	_create_obstacle(Vector2(1000, 4000), Vector2(250, 100))
-	_create_obstacle(Vector2(4000, 4000), Vector2(100, 250))
-	# Long walls creating corridors
-	_create_obstacle(Vector2(2500, 1500), Vector2(800, 50))
-	_create_obstacle(Vector2(2500, 3500), Vector2(800, 50))
-	_create_obstacle(Vector2(1500, 2500), Vector2(50, 800))
-	_create_obstacle(Vector2(3500, 2500), Vector2(50, 800))
+# --- ROAD NETWORK ---
+func _create_road_network():
+	var road_set = {}  # track which tiles have roads: "x,y" -> type
+
+	# Mark crossings
+	for hx in h_roads:
+		for vy in v_roads:
+			road_set[_key(hx, vy)] = "crossing"
+
+	# Place horizontal road tiles
+	for ry in h_roads:
+		var x = TILE / 2
+		while x < GameManager.ARENA_SIZE.x:
+			var k = _key(x, ry)
+			if not road_set.has(k):
+				_place_tile(road_e, Vector2(x, ry))
+			else:
+				_place_tile(road_x, Vector2(x, ry))
+			x += TILE
+
+	# Place vertical road tiles
+	for rx in v_roads:
+		var y = TILE / 2
+		while y < GameManager.ARENA_SIZE.y:
+			var k = _key(rx, y)
+			if not road_set.has(k):
+				_place_tile(road_n, Vector2(rx, y))
+			y += TILE
 
 
-func _create_obstacle(pos: Vector2, size: Vector2):
-	var obstacle = StaticBody2D.new()
-	obstacle.collision_layer = 8
-	obstacle.collision_mask = 0
-	obstacle.position = pos
+func _place_tile(tex: Texture2D, pos: Vector2):
+	var spr = Sprite2D.new()
+	spr.texture = tex
+	spr.position = pos
+	spr.z_index = -8
+	add_child(spr)
+
+
+func _key(x: float, y: float) -> String:
+	return "%d,%d" % [snappedi(int(x), TILE), snappedi(int(y), TILE)]
+
+
+# --- ROADSIDE TREES ---
+func _create_roadside_trees():
+	var tree_textures = [tree_large, tree_small, tree_br_large, tree_br_small, tree_twigs]
+
+	# Along horizontal roads
+	for ry in h_roads:
+		var x = 100.0
+		while x < GameManager.ARENA_SIZE.x - 100:
+			if randf() < 0.3:
+				_place_tree(tree_textures[randi() % tree_textures.size()],
+					Vector2(x, ry + 60 * (1 if randf() > 0.5 else -1) + randf_range(-15, 15)))
+			x += randf_range(60, 150)
+
+	# Along vertical roads
+	for rx in v_roads:
+		var y = 100.0
+		while y < GameManager.ARENA_SIZE.y - 100:
+			if randf() < 0.3:
+				_place_tree(tree_textures[randi() % tree_textures.size()],
+					Vector2(rx + 60 * (1 if randf() > 0.5 else -1) + randf_range(-15, 15), y))
+			y += randf_range(60, 150)
+
+
+func _place_tree(tex: Texture2D, pos: Vector2):
+	# Trees are visual only (no collision) for gameplay flow
+	var spr = Sprite2D.new()
+	spr.texture = tex
+	spr.position = pos
+	spr.z_index = 1
+	add_child(spr)
+
+
+# --- SCATTERED DECORATIONS ---
+func _create_scattered_decorations():
+	var ax = GameManager.ARENA_SIZE.x
+	var ay = GameManager.ARENA_SIZE.y
+	var fp = GameManager.FORTRESS_POS
+	var fs = GameManager.FORTRESS_SIZE
+
+	# Tree clusters (50 clusters across the map)
+	for i in 50:
+		var center = _random_pos_outside_fortress()
+		var count = randi_range(3, 7)
+		for j in count:
+			var offset = Vector2(randf_range(-80, 80), randf_range(-80, 80))
+			var tex = [tree_large, tree_small, tree_br_large, tree_br_small][randi() % 4]
+			_place_tree(tex, center + offset)
+
+	# Oil spills (30)
+	for i in 30:
+		var spr = Sprite2D.new()
+		spr.texture = [oil_large, oil_small][randi() % 2]
+		spr.position = _random_pos_outside_fortress()
+		spr.z_index = -7
+		add_child(spr)
+
+	# Barrel clusters (25)
+	for i in 25:
+		var center = _random_pos_outside_fortress()
+		for j in randi_range(1, 4):
+			var tex = [barrel_tex, barrel_red, barrel_green][randi() % 3]
+			_place_obstacle(center + Vector2(randf_range(-20, 20), randf_range(-20, 20)), tex, Vector2(22, 22))
+
+	# Crate clusters (20)
+	for i in 20:
+		var center = _random_pos_outside_fortress()
+		for j in randi_range(1, 3):
+			var tex = [crate_tex, crate_metal][randi() % 2]
+			_place_obstacle(center + Vector2(randf_range(-25, 25), randf_range(-25, 25)), tex, Vector2(36, 36))
+
+	# Sandbag walls (15 small walls scattered)
+	for i in 15:
+		var start = _random_pos_outside_fortress()
+		var horizontal = randf() > 0.5
+		for j in randi_range(2, 5):
+			var offset = Vector2(j * 38, 0) if horizontal else Vector2(0, j * 26)
+			var tex = [sandbag_tex, sandbag_beige][randi() % 2]
+			_place_obstacle(start + offset, tex, Vector2(36, 22))
+
+
+func _random_pos_outside_fortress() -> Vector2:
+	var fp = GameManager.FORTRESS_POS
+	var fhs = GameManager.FORTRESS_SIZE / 2.0
+	var pos: Vector2
+	for attempt in 20:
+		pos = Vector2(randf_range(200, 9800), randf_range(200, 9800))
+		if abs(pos.x - fp.x) > fhs.x + 100 or abs(pos.y - fp.y) > fhs.y + 100:
+			return pos
+	return pos
+
+
+func _place_obstacle(pos: Vector2, tex: Texture2D, col_size: Vector2):
+	var body = StaticBody2D.new()
+	body.collision_layer = 8
+	body.collision_mask = 0
+	body.position = pos
 	var shape = CollisionShape2D.new()
 	var rect = RectangleShape2D.new()
-	rect.size = size
+	rect.size = col_size
 	shape.shape = rect
-	obstacle.add_child(shape)
-	var visual = ColorRect.new()
-	visual.color = OBSTACLE_COLOR
-	visual.size = size
-	visual.position = -size / 2
-	obstacle.add_child(visual)
-	add_child(obstacle)
+	body.add_child(shape)
+	var spr = Sprite2D.new()
+	spr.texture = tex
+	body.add_child(spr)
+	add_child(body)
+
+
+# --- FORTRESS ---
+func _create_fortress():
+	var fp = GameManager.FORTRESS_POS
+	var fs = GameManager.FORTRESS_SIZE
+	var half = fs / 2.0
+
+	# Fence walls around perimeter
+	_create_fence_line(fp - half, fp + Vector2(half.x, -half.y), true)  # Top
+	_create_fence_line(fp + Vector2(-half.x, half.y), fp + half, true)  # Bottom
+	_create_fence_line(fp - half, fp + Vector2(-half.x, half.y), false)  # Left
+	_create_fence_line(fp + Vector2(half.x, -half.y), fp + half, false)  # Right
+
+	# Gate opening (remove middle fences on south side later - just leave a gap)
+	# Internal obstacles
+	var obstacle_textures = [barricade_tex, barricade_wood, sandbag_tex, sandbag_beige, crate_metal, crate_tex]
+	for i in 20:
+		var tex = obstacle_textures[randi() % obstacle_textures.size()]
+		var pos = fp + Vector2(randf_range(-200, 200), randf_range(-200, 200))
+		_place_obstacle(pos, tex, Vector2(36, 28))
+
+	# Barrels inside
+	for i in 8:
+		var tex = [barrel_tex, barrel_red][randi() % 2]
+		var pos = fp + Vector2(randf_range(-180, 180), randf_range(-180, 180))
+		_place_obstacle(pos, tex, Vector2(22, 22))
+
+
+func _create_fence_line(from: Vector2, to: Vector2, horizontal: bool):
+	var dist = from.distance_to(to)
+	var spacing = 40.0
+	var count = int(dist / spacing)
+	var dir = (to - from).normalized()
+	# Leave a gap in the middle (gate)
+	var mid = count / 2
+	for i in count:
+		if abs(i - mid) <= 1:
+			continue  # Gate opening
+		var pos = from + dir * (i * spacing + spacing / 2)
+		var body = StaticBody2D.new()
+		body.collision_layer = 8
+		body.collision_mask = 0
+		body.position = pos
+		var shape = CollisionShape2D.new()
+		var rect = RectangleShape2D.new()
+		rect.size = Vector2(36, 12) if horizontal else Vector2(12, 36)
+		shape.shape = rect
+		body.add_child(shape)
+		var spr = Sprite2D.new()
+		spr.texture = [fence_tex, fence_yellow][randi() % 2]
+		if not horizontal:
+			spr.rotation = PI / 2
+		body.add_child(spr)
+		add_child(body)

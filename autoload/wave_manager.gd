@@ -5,11 +5,14 @@ signal wave_completed(wave_number: int)
 signal buy_phase_started(duration: float)
 signal buy_phase_ended
 signal spawn_requested(position: Vector2, enemy_type: String)
+signal fortress_activated
 
 var current_wave: int = 0
 var wave_active: bool = false
 var buy_phase_active: bool = false
 var enemies_alive: int = 0
+var fortress_spawned: bool = false
+var fortress_enemies_alive: int = 0
 var enemies_to_spawn: int = 0
 var wave_timer: float = 0.0
 var buy_timer: float = 0.0
@@ -108,9 +111,21 @@ func _start_next_wave():
 
 	wave_started.emit(current_wave)
 
+	# Activate fortress at wave 10
+	if current_wave == 10 and not fortress_spawned:
+		fortress_spawned = true
+		fortress_activated.emit()
+
 
 func enemy_died():
 	enemies_alive -= 1
+
+
+func fortress_enemy_died():
+	fortress_enemies_alive -= 1
+	if fortress_enemies_alive <= 0 and fortress_spawned:
+		GameManager.add_money(5000)
+		# Floating text handled by the caller
 
 
 func get_wave_time_remaining() -> float:
@@ -192,3 +207,5 @@ func reset():
 	buy_phase_active = false
 	enemies_alive = 0
 	enemies_to_spawn = 0
+	fortress_spawned = false
+	fortress_enemies_alive = 0

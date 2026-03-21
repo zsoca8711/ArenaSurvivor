@@ -5,7 +5,9 @@ signal health_changed(hp: float, max_hp: float)
 signal player_died
 signal game_over
 
-const ARENA_SIZE = Vector2(3000, 3000)
+const ARENA_SIZE = Vector2(10000, 10000)
+const FORTRESS_POS = Vector2(7500, 7500)
+const FORTRESS_SIZE = Vector2(500, 500)
 
 var money: int = 0
 var score: int = 0
