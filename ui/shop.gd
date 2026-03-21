@@ -11,6 +11,7 @@ var weapon_items = [
 	{"id": "rocket_launcher", "name": "Rocket Launcher", "price": 2000, "ammo": 10, "type": "weapon"},
 	{"id": "flamethrower", "name": "Flamethrower", "price": 1500, "ammo": 300, "type": "weapon"},
 	{"id": "minigun", "name": "Minigun", "price": 3000, "ammo": 500, "type": "weapon"},
+	{"id": "wand", "name": "Wand (homing + summon)", "price": 4000, "ammo": 200, "type": "weapon"},
 ]
 
 var upgrade_items = [

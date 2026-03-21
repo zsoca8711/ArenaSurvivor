@@ -23,10 +23,14 @@ const WEAPONS = {
 	"rocket_launcher": {"name": "Rocket Launcher", "damage": 80, "fire_rate": 2.0, "speed": 400, "spread": 0.0, "bullets": 1, "lifetime": 5.0, "aoe": 120.0, "color": Color(1, 0.3, 0.1), "max_ammo": 20},
 	"flamethrower": {"name": "Flamethrower", "damage": 3, "fire_rate": 0.03, "speed": 300, "spread": 12.0, "bullets": 1, "lifetime": 0.4, "aoe": 0.0, "color": Color(1, 0.5, 0.0), "max_ammo": 500},
 	"minigun": {"name": "Minigun", "damage": 12, "fire_rate": 0.05, "speed": 750, "spread": 8.0, "bullets": 1, "lifetime": 3.0, "aoe": 0.0, "color": Color(0.7, 0.7, 0.7), "max_ammo": 800},
+	"wand": {"name": "Wand", "damage": 15, "fire_rate": 0.4, "speed": 600, "spread": 0.0, "bullets": 1, "lifetime": 5.0, "aoe": 0.0, "color": Color(0.1, 0.0, 0.1), "max_ammo": 200, "homing": true},
 }
 
 var weapons_owned: Dictionary = {"pistol": -1}  # weapon_id -> ammo (-1 = infinite)
 var current_weapon: String = "pistol"
+var summon_cooldown: float = 0.0
+const SUMMON_COOLDOWN_TIME = 3.0
+var minion_scene = preload("res://player/minion.tscn")
 
 
 func _ready():
@@ -45,7 +49,25 @@ func _process(delta):
 	if is_dead:
 		return
 	_handle_shooting()
+	_handle_summon(delta)
 	_process_contact_damage(delta)
+
+
+func _handle_summon(delta):
+	summon_cooldown -= delta
+	if current_weapon == "wand" and Input.is_action_just_pressed("summon") and summon_cooldown <= 0:
+		var ammo = weapons_owned.get("wand", 0)
+		if ammo == 0:
+			return
+		if ammo > 0:
+			weapons_owned["wand"] -= 5
+			if weapons_owned["wand"] < 0:
+				weapons_owned["wand"] = 0
+		var minion = minion_scene.instantiate()
+		minion.global_position = global_position + Vector2(randf_range(-40, 40), randf_range(-40, 40))
+		minion.owner_player = self
+		get_tree().current_scene.call_deferred("add_child", minion)
+		summon_cooldown = SUMMON_COOLDOWN_TIME
 
 
 func _input(event):
@@ -100,6 +122,8 @@ func _fire():
 		bullet.lifetime = weapon["lifetime"]
 		bullet.aoe_radius = weapon["aoe"]
 		bullet.bullet_color = weapon["color"]
+		if weapon.get("homing", false):
+			bullet.homing = true
 		get_tree().current_scene.add_child(bullet)
 	var rate = max(0.02, weapon["fire_rate"] - fire_rate_bonus)
 	$FireTimer.start(rate)
