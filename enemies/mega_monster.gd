@@ -66,4 +66,4 @@ func die():
 	WaveManager.enemy_died()
 	GameManager.try_drop_loot(global_position)
 	GameManager.try_drop_loot(global_position)  # Double loot chance
-	queue_free()
+	call_deferred("queue_free")

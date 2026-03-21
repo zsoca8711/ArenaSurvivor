@@ -39,7 +39,7 @@ func _spawn_drop_text():
 func _on_body_entered(body: Node2D):
 	if body.is_in_group("player"):
 		_apply(body)
-		queue_free()
+		call_deferred("queue_free")
 
 
 func _apply(player):

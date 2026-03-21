@@ -194,7 +194,7 @@ func _get_enemy_type() -> String:
 func skip_wave():
 	# Kill all remaining enemies and end wave
 	for enemy in get_tree().get_nodes_in_group("enemies"):
-		enemy.queue_free()
+		enemy.call_deferred("queue_free")
 	enemies_alive = 0
 	enemies_to_spawn = 0
 	if wave_active:

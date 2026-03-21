@@ -22,7 +22,7 @@ func _on_body_entered(body: Node2D):
 	else:
 		if body.is_in_group("enemies"):
 			body.take_damage(damage)
-	queue_free()
+	call_deferred("queue_free")
 
 
 func _explode():

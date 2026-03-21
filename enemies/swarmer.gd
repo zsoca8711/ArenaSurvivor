@@ -53,4 +53,4 @@ func die():
 	GameManager.enemy_killed()
 	WaveManager.enemy_died()
 	GameManager.try_drop_loot(global_position)
-	queue_free()
+	call_deferred("queue_free")
