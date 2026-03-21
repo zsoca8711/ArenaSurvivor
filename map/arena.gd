@@ -38,6 +38,7 @@ var fence_yellow = preload("res://assets/sprites/fence_yellow.png")
 var oil_large = preload("res://assets/sprites/oil_large.png")
 var oil_small = preload("res://assets/sprites/oil_small.png")
 var machine_gunner_scene = preload("res://enemies/machine_gunner.tscn")
+var safe_zone_scene = preload("res://map/safe_zone.tscn")
 
 # Road grid positions
 var h_roads = [1500, 3500, 5000, 6500, 8500]
@@ -51,6 +52,7 @@ func _ready():
 	_create_roadside_trees()
 	_create_scattered_decorations()
 	_create_bases()
+	_create_safe_zones()
 	_create_fortress()
 
 
@@ -304,6 +306,39 @@ func _create_base(center: Vector2):
 		var gunner = machine_gunner_scene.instantiate()
 		gunner.global_position = center + Vector2(randf_range(-half + 30, half - 30), randf_range(-half + 30, half - 30))
 		call_deferred("add_child", gunner)
+
+
+# --- SAFE ZONES (farmhouses) ---
+func _create_safe_zones():
+	var arena = GameManager.ARENA_SIZE
+	var fp = GameManager.FORTRESS_POS
+	var center = arena / 2.0
+
+	# Place 6-10 farmhouses across the map
+	for i in randi_range(6, 10):
+		var pos: Vector2
+		for attempt in 20:
+			pos = Vector2(randf_range(400, arena.x - 400), randf_range(400, arena.y - 400))
+			# Don't place near center, fortress, or roads
+			if pos.distance_to(center) < 400:
+				continue
+			if pos.distance_to(fp) < 600:
+				continue
+			var near_road = false
+			for ry in h_roads:
+				if abs(pos.y - ry) < 150:
+					near_road = true
+					break
+			if not near_road:
+				for rx in v_roads:
+					if abs(pos.x - rx) < 150:
+						near_road = true
+						break
+			if not near_road:
+				break
+		var zone = safe_zone_scene.instantiate()
+		zone.global_position = pos
+		call_deferred("add_child", zone)
 
 
 # --- FORTRESS ---

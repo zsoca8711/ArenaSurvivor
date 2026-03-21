@@ -130,6 +130,7 @@ func _spawn_radio_demon():
 
 
 var in_vehicle: bool = false
+var in_safe_zone: bool = false
 
 
 func _input(event):
@@ -170,6 +171,8 @@ func _handle_aim():
 
 
 func _handle_shooting():
+	if in_safe_zone:
+		return
 	if Input.is_action_pressed("fire") and can_fire:
 		_fire()
 
