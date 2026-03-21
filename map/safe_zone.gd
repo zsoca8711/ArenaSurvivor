@@ -10,7 +10,7 @@ var farm_hay_tex = preload("res://assets/sprites/farm_hay.png")
 var farm_corn_tex = preload("res://assets/sprites/farm_corn.png")
 
 const PUSH_FORCE = 300.0
-const MAX_STAY_TIME = 10.0
+var MAX_STAY_TIME: float = 10.0
 
 var stay_timer: float = 0.0
 var protection_active: bool = true
@@ -21,6 +21,7 @@ func _ready():
 	add_to_group("safe_zones")
 	collision_layer = 0
 	collision_mask = 3  # Detect player (1) and enemies (2)
+	MAX_STAY_TIME = GameManager.get_safe_zone_time()
 	_build_visual()
 
 

@@ -45,7 +45,15 @@ func _build_ui():
 	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	main_panel.add_child(spacer)
 
-	_add_button(main_panel, "Single Player", _on_single_player)
+	_add_button(main_panel, "Easy", _on_easy)
+	_add_button(main_panel, "Medium (+25% dmg, 5s safe)", _on_medium)
+	_add_button(main_panel, "Hard (+50% dmg, 2s safe)", _on_hard)
+
+	var sp2 = Control.new()
+	sp2.custom_minimum_size = Vector2(0, 10)
+	sp2.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	main_panel.add_child(sp2)
+
 	_add_button(main_panel, "Multiplayer", _on_multiplayer)
 	_add_button(main_panel, "Quit", _on_quit)
 
@@ -123,10 +131,23 @@ func _add_button(parent: Control, text: String, callback: Callable):
 	parent.add_child(btn)
 
 
-func _on_single_player():
+func _start_singleplayer(diff: int):
+	GameManager.difficulty = diff
 	NetworkManager.is_host = false
 	NetworkManager.is_online = false
 	get_tree().change_scene_to_file("res://main/main.tscn")
+
+
+func _on_easy():
+	_start_singleplayer(GameManager.Difficulty.EASY)
+
+
+func _on_medium():
+	_start_singleplayer(GameManager.Difficulty.MEDIUM)
+
+
+func _on_hard():
+	_start_singleplayer(GameManager.Difficulty.HARD)
 
 
 func _on_multiplayer():

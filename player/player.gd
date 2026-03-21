@@ -247,7 +247,7 @@ func _process_contact_damage(delta):
 func take_damage(amount: float):
 	if is_dead or invincible:
 		return
-	hp -= amount
+	hp -= amount * GameManager.get_enemy_damage_multiplier()
 	hp = max(hp, 0)
 	GameManager.health_changed.emit(hp, max_hp)
 	$Body.modulate = Color(1, 0.3, 0.3)

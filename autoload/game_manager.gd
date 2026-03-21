@@ -9,10 +9,27 @@ const ARENA_SIZE = Vector2(10000, 10000)
 const FORTRESS_POS = Vector2(7500, 7500)
 const FORTRESS_SIZE = Vector2(500, 500)
 
+enum Difficulty {EASY, MEDIUM, HARD}
+
+var difficulty: int = Difficulty.EASY
 var money: int = 0
 var score: int = 0
 var kills: int = 0
 var game_active: bool = false
+
+
+func get_enemy_damage_multiplier() -> float:
+	match difficulty:
+		Difficulty.MEDIUM: return 1.25
+		Difficulty.HARD: return 1.5
+	return 1.0
+
+
+func get_safe_zone_time() -> float:
+	match difficulty:
+		Difficulty.MEDIUM: return 5.0
+		Difficulty.HARD: return 2.0
+	return 10.0
 
 
 func start_game():
