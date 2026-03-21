@@ -68,6 +68,9 @@ func _spawn_local_player():
 	player.global_position = Vector2(5000, 5000)
 	add_child(player)
 	players[1] = player
+	# Apply save data if continuing story
+	if GameManager.story_mode and FileAccess.file_exists(GameManager.SAVE_PATH):
+		GameManager.apply_save_to_player(player)
 	GameManager.health_changed.emit(player.hp, player.max_hp)
 
 

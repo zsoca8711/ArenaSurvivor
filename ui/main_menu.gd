@@ -57,6 +57,8 @@ func _build_ui():
 	main_panel.add_child(sp2)
 
 	_add_button(main_panel, "Story Mode", _on_story)
+	if FileAccess.file_exists(GameManager.SAVE_PATH):
+		_add_button(main_panel, "Continue Story", _on_continue_story)
 	_add_button(main_panel, "Multiplayer", _on_multiplayer)
 	_add_button(main_panel, "Quit", _on_quit)
 
@@ -220,12 +222,21 @@ func _on_map_back():
 
 
 func _on_story():
+	GameManager.delete_save()
 	GameManager.difficulty = GameManager.Difficulty.EASY
 	GameManager.map_type = GameManager.MapType.DEFAULT
 	GameManager.story_mode = true
+	GameManager.story_step = 0
 	NetworkManager.is_host = false
 	NetworkManager.is_online = false
 	get_tree().change_scene_to_file("res://main/main.tscn")
+
+
+func _on_continue_story():
+	if GameManager.load_story():
+		NetworkManager.is_host = false
+		NetworkManager.is_online = false
+		get_tree().change_scene_to_file("res://main/main.tscn")
 
 
 func _on_multiplayer():

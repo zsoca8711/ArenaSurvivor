@@ -37,6 +37,71 @@ func get_safe_zone_time() -> float:
 	return 10.0
 
 
+const SAVE_PATH = "user://story_save.json"
+
+
+func save_story():
+	var player = get_tree().get_first_node_in_group("player")
+	var data = {
+		"story_step": story_step,
+		"map_type": map_type,
+		"money": money,
+		"score": score,
+		"kills": kills,
+		"hp": player.hp if player else 100.0,
+		"max_hp": player.max_hp if player else 100.0,
+		"weapon": player.current_weapon if player else "pistol",
+		"has_telekinetic": player.has_telekinetic if player else false,
+		"damage_bonus": player.damage_bonus if player else 0.0,
+		"speed": player.speed if player else 200.0,
+	}
+	var file = FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	file.store_string(JSON.stringify(data))
+	file.close()
+
+
+func load_story() -> bool:
+	if not FileAccess.file_exists(SAVE_PATH):
+		return false
+	var file = FileAccess.open(SAVE_PATH, FileAccess.READ)
+	var text = file.get_as_text()
+	file.close()
+	var data = JSON.parse_string(text)
+	if data == null:
+		return false
+	story_mode = true
+	story_step = int(data.get("story_step", 0))
+	map_type = int(data.get("map_type", 0))
+	money = int(data.get("money", 0))
+	score = int(data.get("score", 0))
+	kills = int(data.get("kills", 0))
+	return true
+
+
+func apply_save_to_player(player):
+	if not FileAccess.file_exists(SAVE_PATH):
+		return
+	var file = FileAccess.open(SAVE_PATH, FileAccess.READ)
+	var text = file.get_as_text()
+	file.close()
+	var data = JSON.parse_string(text)
+	if data == null:
+		return
+	player.max_hp = float(data.get("max_hp", 100.0))
+	player.hp = float(data.get("hp", 100.0))
+	var weapon = data.get("weapon", "")
+	if weapon != "":
+		player.add_weapon(weapon)
+	player.has_telekinetic = data.get("has_telekinetic", false)
+	player.damage_bonus = float(data.get("damage_bonus", 0.0))
+	player.speed = float(data.get("speed", 200.0))
+
+
+func delete_save():
+	if FileAccess.file_exists(SAVE_PATH):
+		DirAccess.remove_absolute(SAVE_PATH)
+
+
 func start_game():
 	money = 0
 	score = 0

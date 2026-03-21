@@ -261,6 +261,7 @@ func _process(_delta):
 				_show_message("Village saved! Escaping to the forest...")
 				GameManager.story_step = 6
 				GameManager.map_type = GameManager.MapType.FOREST
+				GameManager.save_story()
 				get_tree().create_timer(3.0).timeout.connect(
 					func(): get_tree().reload_current_scene()
 				)
@@ -274,6 +275,7 @@ func _process(_delta):
 				_show_message("Forest cleared! Moving to the battlefield...")
 				GameManager.story_step = 8
 				GameManager.map_type = GameManager.MapType.BATTLEFIELD
+				GameManager.save_story()
 				get_tree().create_timer(3.0).timeout.connect(
 					func(): get_tree().reload_current_scene()
 				)
@@ -287,6 +289,7 @@ func _process(_delta):
 				_show_message("Battle won! But the monsters surround you... Winter comes!")
 				GameManager.story_step = 10
 				GameManager.map_type = GameManager.MapType.SNOW
+				GameManager.save_story()
 				get_tree().create_timer(3.0).timeout.connect(
 					func(): get_tree().reload_current_scene()
 				)
@@ -325,6 +328,7 @@ func _advance(new_step: int, message: String):
 	GameManager.story_step = new_step
 	_update_quest_text()
 	_show_message(message)
+	GameManager.save_story()
 
 
 func _on_kill():
@@ -425,6 +429,7 @@ func _launch_rocket():
 
 func _show_win_screen():
 	GameManager.story_step = 14
+	GameManager.delete_save()
 	get_tree().paused = true
 	process_mode = Node.PROCESS_MODE_ALWAYS
 
