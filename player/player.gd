@@ -248,6 +248,10 @@ func _boss_death():
 	hp = max_hp * 0.1
 	GameManager.health_changed.emit(hp, max_hp)
 	_last_damage_source_is_boss = false
+	# Lock cheats on boss death too
+	var pause_menu = get_tree().current_scene.get_node_or_null("PauseMenu")
+	if pause_menu and pause_menu.has_method("lock_cheats"):
+		pause_menu.lock_cheats()
 	# Flash white to show respawn
 	$Body.modulate = Color(1, 1, 1, 0.3)
 	get_tree().create_timer(0.5).timeout.connect(

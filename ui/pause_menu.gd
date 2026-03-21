@@ -2,6 +2,11 @@ extends CanvasLayer
 
 var is_open: bool = false
 var god_mode_btn: Button
+var cheats_unlocked: bool = false
+var cheat_container: VBoxContainer
+var auth_container: VBoxContainer
+var auth_input: LineEdit
+var auth_label: Label
 
 
 func _ready():
@@ -54,29 +59,68 @@ func _build_ui():
 	_add_button(vbox, "Main Menu", _on_main_menu)
 	_add_button(vbox, "Quit", _on_quit)
 
-	# Cheats section
+	# Auth section (enter code to unlock cheats)
 	var cheat_spacer = Control.new()
-	cheat_spacer.custom_minimum_size = Vector2(0, 20)
+	cheat_spacer.custom_minimum_size = Vector2(0, 15)
 	cheat_spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vbox.add_child(cheat_spacer)
 
-	var cheat_title = Label.new()
-	cheat_title.text = "-- CHEATS --"
-	cheat_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	cheat_title.add_theme_font_size_override("font_size", 20)
-	cheat_title.add_theme_color_override("font_color", Color(1, 0.3, 0.3))
-	cheat_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	vbox.add_child(cheat_title)
+	auth_container = VBoxContainer.new()
+	auth_container.alignment = BoxContainer.ALIGNMENT_CENTER
+	auth_container.add_theme_constant_override("separation", 8)
+	auth_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	vbox.add_child(auth_container)
 
-	_add_cheat_button(vbox, "+$1,000,000", _on_cheat_money)
-	god_mode_btn = _add_cheat_button(vbox, "God Mode: OFF", _on_cheat_god_mode)
-	_add_cheat_button(vbox, "Skip Wave", _on_cheat_skip_wave)
-	_add_cheat_button(vbox, "Summon Demogorgon", _on_cheat_demogorgon)
-	_add_cheat_button(vbox, "Summon Giant Tank", _on_cheat_giant_tank)
-	_add_cheat_button(vbox, "Summon Vecna", _on_cheat_vecna)
-	_add_cheat_button(vbox, "Summon Mind Flayer", _on_cheat_mind_flayer)
-	_add_cheat_button(vbox, "Summon God", _on_cheat_god)
-	_add_cheat_button(vbox, "Summon Satan", _on_cheat_satan)
+	var auth_title = Label.new()
+	auth_title.text = "-- CHEATS (locked) --"
+	auth_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	auth_title.add_theme_font_size_override("font_size", 18)
+	auth_title.add_theme_color_override("font_color", Color(1, 0.3, 0.3))
+	auth_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	auth_container.add_child(auth_title)
+
+	auth_input = LineEdit.new()
+	auth_input.placeholder_text = "Enter code..."
+	auth_input.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	auth_input.custom_minimum_size = Vector2(180, 35)
+	auth_input.add_theme_font_size_override("font_size", 20)
+	auth_input.secret = true
+	auth_container.add_child(auth_input)
+
+	auth_label = Label.new()
+	auth_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	auth_label.add_theme_font_size_override("font_size", 16)
+	auth_label.add_theme_color_override("font_color", Color(1, 0.3, 0.3))
+	auth_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	auth_container.add_child(auth_label)
+
+	_add_button(auth_container, "Unlock Cheats", _on_auth_submit)
+
+	# Cheats section (hidden until unlocked)
+	cheat_container = VBoxContainer.new()
+	cheat_container.alignment = BoxContainer.ALIGNMENT_CENTER
+	cheat_container.add_theme_constant_override("separation", 4)
+	cheat_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	cheat_container.visible = false
+	vbox.add_child(cheat_container)
+
+	var cheat_title = Label.new()
+	cheat_title.text = "-- CHEATS (unlocked) --"
+	cheat_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	cheat_title.add_theme_font_size_override("font_size", 18)
+	cheat_title.add_theme_color_override("font_color", Color(0.3, 1, 0.3))
+	cheat_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	cheat_container.add_child(cheat_title)
+
+	_add_cheat_button(cheat_container, "+$1,000,000", _on_cheat_money)
+	god_mode_btn = _add_cheat_button(cheat_container, "God Mode: OFF", _on_cheat_god_mode)
+	_add_cheat_button(cheat_container, "Skip Wave", _on_cheat_skip_wave)
+	_add_cheat_button(cheat_container, "Summon Demogorgon", _on_cheat_demogorgon)
+	_add_cheat_button(cheat_container, "Summon Giant Tank", _on_cheat_giant_tank)
+	_add_cheat_button(cheat_container, "Summon Vecna", _on_cheat_vecna)
+	_add_cheat_button(cheat_container, "Summon Mind Flayer", _on_cheat_mind_flayer)
+	_add_cheat_button(cheat_container, "Summon God", _on_cheat_god)
+	_add_cheat_button(cheat_container, "Summon Satan", _on_cheat_satan)
 
 
 func _add_button(parent: Control, text: String, callback: Callable):
@@ -108,6 +152,24 @@ func close():
 	is_open = false
 	visible = false
 	get_tree().paused = false
+
+
+func lock_cheats():
+	cheats_unlocked = false
+	cheat_container.visible = false
+	auth_container.visible = true
+	auth_input.text = ""
+	auth_label.text = ""
+
+
+func _on_auth_submit():
+	if auth_input.text.strip_edges() == "2012":
+		cheats_unlocked = true
+		cheat_container.visible = true
+		auth_container.visible = false
+	else:
+		auth_label.text = "Wrong code!"
+		auth_input.text = ""
 
 
 func _on_resume():

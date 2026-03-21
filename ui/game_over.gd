@@ -74,6 +74,10 @@ func _on_game_over():
 	visible = true
 	get_tree().paused = true
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	# Lock cheats on death
+	var pause_menu = get_tree().current_scene.get_node_or_null("PauseMenu")
+	if pause_menu and pause_menu.has_method("lock_cheats"):
+		pause_menu.lock_cheats()
 
 
 func _on_restart():
