@@ -10,8 +10,10 @@ const FORTRESS_POS = Vector2(7500, 7500)
 const FORTRESS_SIZE = Vector2(500, 500)
 
 enum Difficulty {EASY, MEDIUM, HARD}
+enum MapType {DEFAULT, FOREST, BATTLEFIELD, SNOW}
 
 var difficulty: int = Difficulty.EASY
+var map_type: int = MapType.DEFAULT
 var money: int = 0
 var score: int = 0
 var kills: int = 0

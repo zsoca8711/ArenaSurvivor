@@ -66,6 +66,7 @@ func _ready():
 	_create_road_network()
 	_create_roadside_trees()
 	_create_scattered_decorations()
+	_create_map_extras()
 	_create_bases()
 	_create_safe_zones()
 	_create_fortress()
@@ -73,8 +74,16 @@ func _ready():
 
 # --- GROUND ---
 func _create_ground():
-	# Tiled grass using TextureRect for performance
 	var ground = TextureRect.new()
+	if GameManager.map_type == GameManager.MapType.SNOW:
+		# White background for snow
+		var bg = ColorRect.new()
+		bg.color = Color(0.92, 0.93, 0.95)
+		bg.size = GameManager.ARENA_SIZE
+		bg.z_index = -10
+		bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(bg)
+		return
 	ground.texture = grass1
 	ground.stretch_mode = TextureRect.STRETCH_TILE
 	ground.size = GameManager.ARENA_SIZE
@@ -82,7 +91,7 @@ func _create_ground():
 	ground.z_index = -10
 	ground.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(ground)
-	# Sandy patches
+	# Sandy patches (skip for snow)
 	for i in 40:
 		var patch = Sprite2D.new()
 		patch.texture = [sand1, sand2][randi() % 2]
@@ -286,6 +295,99 @@ func _create_scattered_decorations():
 		spr.position = _random_pos_outside_fortress()
 		spr.z_index = -6
 		add_child(spr)
+
+
+# --- MAP-SPECIFIC EXTRAS ---
+func _create_map_extras():
+	match GameManager.map_type:
+		GameManager.MapType.FOREST:
+			_create_forest_extras()
+		GameManager.MapType.BATTLEFIELD:
+			_create_battlefield_extras()
+		GameManager.MapType.SNOW:
+			pass  # Snow is just white, no extras needed
+
+
+func _create_forest_extras():
+	# +40% more trees and bushes
+	var tree_textures = [tree_large, tree_small, tree_br_large, tree_br_small, tree_twigs, tree_leaf, tree_brown_leaf]
+	for i in 80:
+		var center = _random_pos_outside_fortress()
+		var count = randi_range(4, 10)
+		for j in count:
+			var offset = Vector2(randf_range(-100, 100), randf_range(-100, 100))
+			var tex = tree_textures[randi() % tree_textures.size()]
+			_place_tree(tex, center + offset)
+
+	# Extra roadside bushes
+	for ry in h_roads:
+		var x = 50.0
+		while x < GameManager.ARENA_SIZE.x - 50:
+			if randf() < 0.5:
+				var tex = tree_textures[randi() % tree_textures.size()]
+				var side = 50 * (1 if randf() > 0.5 else -1)
+				_place_tree(tex, Vector2(x, ry + side + randf_range(-20, 20)))
+			x += randf_range(40, 100)
+	for rx in v_roads:
+		var y = 50.0
+		while y < GameManager.ARENA_SIZE.y - 50:
+			if randf() < 0.5:
+				var tex = tree_textures[randi() % tree_textures.size()]
+				var side = 50 * (1 if randf() > 0.5 else -1)
+				_place_tree(tex, Vector2(rx + side + randf_range(-20, 20), y))
+			y += randf_range(40, 100)
+
+
+func _create_battlefield_extras():
+	# Lots of tank structures, wire, sandbags, tracks
+	# Extra wire fences (50 more)
+	for i in 50:
+		var tex = [wire_crooked, wire_straight][randi() % 2]
+		_place_obstacle(_random_pos_outside_fortress(), tex, Vector2(40, 10))
+
+	# Extra sandbag fortifications (30)
+	for i in 30:
+		var start = _random_pos_outside_fortress()
+		var horizontal = randf() > 0.5
+		for j in randi_range(3, 8):
+			var offset = Vector2(j * 38, 0) if horizontal else Vector2(0, j * 26)
+			var tex = [sandbag_tex, sandbag_beige, sandbag_open][randi() % 3]
+			_place_obstacle(start + offset, tex, Vector2(36, 22))
+
+	# Tons of tank tracks (80 more)
+	for i in 80:
+		var spr = Sprite2D.new()
+		spr.texture = [tracks_double, tracks_large, tracks_small][randi() % 3]
+		spr.position = _random_pos_outside_fortress()
+		spr.rotation = randf() * TAU
+		spr.z_index = -7
+		add_child(spr)
+
+	# Extra barrel clusters (30)
+	for i in 30:
+		var center = _random_pos_outside_fortress()
+		for j in randi_range(2, 5):
+			var tex = [barrel_tex, barrel_red, barrel_rust, barrel_black, barrel_green][randi() % 5]
+			_place_obstacle(center + Vector2(randf_range(-25, 25), randf_range(-25, 25)), tex, Vector2(22, 22))
+
+	# Extra crates (25)
+	for i in 25:
+		var tex = [crate_tex, crate_metal, crate_wood_side, crate_metal_side][randi() % 4]
+		_place_obstacle(_random_pos_outside_fortress(), tex, Vector2(34, 34))
+
+	# Extra special barrels / wreckage (30)
+	for i in 30:
+		var spr = Sprite2D.new()
+		spr.texture = [special_barrel1, special_barrel2, special_barrel3][randi() % 3]
+		spr.position = _random_pos_outside_fortress()
+		spr.rotation = randf() * TAU
+		spr.z_index = 0
+		add_child(spr)
+
+	# Extra barricades (20)
+	for i in 20:
+		var tex = [barricade_tex, barricade_wood][randi() % 2]
+		_place_obstacle(_random_pos_outside_fortress(), tex, Vector2(50, 50))
 
 
 func _random_pos_outside_fortress() -> Vector2:

@@ -2,8 +2,10 @@ extends Control
 
 var center: CenterContainer
 var mp_center: CenterContainer
+var map_center: CenterContainer
 var code_input: LineEdit
 var status_label: Label
+var _selected_difficulty: int = 0
 
 
 func _ready():
@@ -56,6 +58,44 @@ func _build_ui():
 
 	_add_button(main_panel, "Multiplayer", _on_multiplayer)
 	_add_button(main_panel, "Quit", _on_quit)
+
+	# ---- Map select panel (HIDDEN by default) ----
+	map_center = CenterContainer.new()
+	map_center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	map_center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	map_center.visible = false
+	add_child(map_center)
+
+	var map_panel = VBoxContainer.new()
+	map_panel.alignment = BoxContainer.ALIGNMENT_CENTER
+	map_panel.add_theme_constant_override("separation", 20)
+	map_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	map_center.add_child(map_panel)
+
+	var map_title = Label.new()
+	map_title.text = "SELECT MAP"
+	map_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	map_title.add_theme_font_size_override("font_size", 48)
+	map_title.add_theme_color_override("font_color", Color(0.9, 0.15, 0.1))
+	map_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	map_panel.add_child(map_title)
+
+	var map_spacer = Control.new()
+	map_spacer.custom_minimum_size = Vector2(0, 10)
+	map_spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	map_panel.add_child(map_spacer)
+
+	_add_button(map_panel, "Default", _on_map_default)
+	_add_button(map_panel, "Forest (+40% trees)", _on_map_forest)
+	_add_button(map_panel, "Battlefield (structures)", _on_map_battlefield)
+	_add_button(map_panel, "Snow (white)", _on_map_snow)
+
+	var map_spacer2 = Control.new()
+	map_spacer2.custom_minimum_size = Vector2(0, 10)
+	map_spacer2.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	map_panel.add_child(map_spacer2)
+
+	_add_button(map_panel, "Back", _on_map_back)
 
 	# ---- Multiplayer panel (HIDDEN by default) ----
 	mp_center = CenterContainer.new()
@@ -131,23 +171,51 @@ func _add_button(parent: Control, text: String, callback: Callable):
 	parent.add_child(btn)
 
 
-func _start_singleplayer(diff: int):
-	GameManager.difficulty = diff
+func _show_map_select(diff: int):
+	_selected_difficulty = diff
+	center.visible = false
+	map_center.visible = true
+
+
+func _start_game(map: int):
+	GameManager.difficulty = _selected_difficulty
+	GameManager.map_type = map
 	NetworkManager.is_host = false
 	NetworkManager.is_online = false
 	get_tree().change_scene_to_file("res://main/main.tscn")
 
 
 func _on_easy():
-	_start_singleplayer(GameManager.Difficulty.EASY)
+	_show_map_select(GameManager.Difficulty.EASY)
 
 
 func _on_medium():
-	_start_singleplayer(GameManager.Difficulty.MEDIUM)
+	_show_map_select(GameManager.Difficulty.MEDIUM)
 
 
 func _on_hard():
-	_start_singleplayer(GameManager.Difficulty.HARD)
+	_show_map_select(GameManager.Difficulty.HARD)
+
+
+func _on_map_default():
+	_start_game(GameManager.MapType.DEFAULT)
+
+
+func _on_map_forest():
+	_start_game(GameManager.MapType.FOREST)
+
+
+func _on_map_battlefield():
+	_start_game(GameManager.MapType.BATTLEFIELD)
+
+
+func _on_map_snow():
+	_start_game(GameManager.MapType.SNOW)
+
+
+func _on_map_back():
+	map_center.visible = false
+	center.visible = true
 
 
 func _on_multiplayer():
