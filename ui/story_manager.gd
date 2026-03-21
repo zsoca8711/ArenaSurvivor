@@ -1,11 +1,26 @@
 extends CanvasLayer
 
-# Story mode quest manager
-# Step 0: Find the scroll (near player start, with a shovel)
-# Step 1: Follow the map to find the treasure (pistol)
-# Step 2: Go to a safe zone to open the shop
-# Step 3: Kill 10 monsters
-# Step 4: Won!
+# STORY MODE - Full quest chain
+# Phase 1 (Default map):
+#   0: Find scroll near start
+#   1: Follow map to treasure (pistol)
+#   2: Go to safe zone
+#   3: Kill 10 monsters
+# Phase 2 (Default map - burning village):
+#   4: Go to burning village, save villagers
+#   5: Kill all village monsters
+# Phase 3 (Forest map):
+#   6: Arrive in forest, tamed monsters in villages
+#   7: Kill 100 monsters
+# Phase 4 (Battlefield map):
+#   8: Tamed bosses fight enemy bosses
+#   9: Kill 50 enemies
+# Phase 5 (Snow map - surrounded):
+#   10: Break through monster ring
+#   11: Collect Uranium
+#   12: Collect Rocket Body
+#   13: Return to village center
+#   14: Build rocket → WIN
 
 var quest_label: Label
 var arrow_label: Label
@@ -13,12 +28,18 @@ var story_kills: int = 0
 
 var scroll_pos: Vector2
 var treasure_pos: Vector2
-var target_safezone_pos: Vector2
+var target_pos: Vector2
+var village_pos: Vector2
+var uranium_pos: Vector2
+var rocket_body_pos: Vector2
 
-var scroll_collected: bool = false
-var treasure_collected: bool = false
+var has_uranium: bool = false
+var has_rocket_body: bool = false
 
-const PICKUP_RADIUS = 50.0
+var villager_scene = preload("res://player/villager.tscn")
+var minion_scene = preload("res://player/minion.tscn")
+
+const PICKUP_RADIUS = 60.0
 
 
 func _ready():
@@ -27,12 +48,11 @@ func _ready():
 		set_process(false)
 		return
 	_build_ui()
-	_spawn_story_items()
+	_setup_phase()
 	GameManager.enemy_killed_signal.connect(_on_kill)
 
 
 func _build_ui():
-	# Quest text (top center)
 	var margin = MarginContainer.new()
 	margin.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
 	margin.add_theme_constant_override("margin_top", 60)
@@ -46,61 +66,147 @@ func _build_ui():
 	quest_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	margin.add_child(quest_label)
 
-	# Direction arrow
 	arrow_label = Label.new()
 	arrow_label.add_theme_font_size_override("font_size", 30)
 	arrow_label.add_theme_color_override("font_color", Color(1, 0.85, 0))
 	arrow_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	arrow_label.z_index = 50
 	add_child(arrow_label)
+	arrow_label.visible = false
 
+
+func _setup_phase():
+	var step = GameManager.story_step
+	if step <= 3:
+		_setup_phase1()
+	elif step <= 5:
+		_setup_phase2()
+	elif step <= 7:
+		_setup_phase3()
+	elif step <= 9:
+		_setup_phase4()
+	elif step <= 14:
+		_setup_phase5()
 	_update_quest_text()
 
 
-func _spawn_story_items():
+func _setup_phase1():
 	var player_start = Vector2(5000, 5000)
-
-	# Scroll + shovel near player (100-200px away)
 	scroll_pos = player_start + Vector2(randf_range(80, 150), randf_range(-100, 100))
-	_create_item_marker(scroll_pos, Color(0.8, 0.7, 0.3), "SCROLL")
-
-	# Treasure further away (1500-2500px)
 	var angle = randf() * TAU
 	treasure_pos = player_start + Vector2(cos(angle) * 2000, sin(angle) * 2000)
 	treasure_pos.x = clamp(treasure_pos.x, 500, 9500)
 	treasure_pos.y = clamp(treasure_pos.y, 500, 9500)
+	if GameManager.story_step == 0:
+		_create_marker(scroll_pos, Color(0.8, 0.7, 0.3), "SCROLL")
+	elif GameManager.story_step == 1:
+		_create_marker(treasure_pos, Color(1, 0.85, 0), "TREASURE")
 
-	# Find nearest safe zone for step 2
-	target_safezone_pos = Vector2(3000, 3000)  # Fallback
+
+func _setup_phase2():
+	village_pos = Vector2(3000, 3000)
+	if GameManager.story_step == 4:
+		_create_marker(village_pos, Color(1, 0.3, 0.1), "BURNING VILLAGE")
+	elif GameManager.story_step == 5:
+		# Spawn villagers and attacking monsters
+		call_deferred("_spawn_village_battle")
 
 
-func _create_item_marker(pos: Vector2, color: Color, text: String):
-	var marker = Node2D.new()
-	marker.global_position = pos
-	marker.name = "Marker_" + text
+func _spawn_village_battle():
+	for i in 8:
+		var v = villager_scene.instantiate()
+		v.global_position = village_pos + Vector2(randf_range(-150, 150), randf_range(-150, 150))
+		get_tree().current_scene.call_deferred("add_child", v)
+	# Burning effect
+	for i in 5:
+		var fire = Polygon2D.new()
+		fire.color = Color(1, 0.4, 0.0, 0.4)
+		var pts = PackedVector2Array()
+		for j in 8:
+			var a = j * TAU / 8
+			pts.append(Vector2(cos(a) * randf_range(30, 60), sin(a) * randf_range(30, 60)))
+		fire.polygon = pts
+		fire.global_position = village_pos + Vector2(randf_range(-100, 100), randf_range(-100, 100))
+		fire.z_index = -5
+		get_tree().current_scene.call_deferred("add_child", fire)
 
-	# Glowing circle
-	var circle = Polygon2D.new()
-	circle.color = Color(color.r, color.g, color.b, 0.4)
-	var points = PackedVector2Array()
-	for i in 16:
-		var a = i * TAU / 16
-		points.append(Vector2(cos(a) * 25, sin(a) * 25))
-	circle.polygon = points
-	circle.z_index = 5
-	marker.add_child(circle)
 
-	# Label
-	var lbl = Label.new()
-	lbl.text = text
-	lbl.position = Vector2(-25, -35)
-	lbl.add_theme_font_size_override("font_size", 14)
-	lbl.add_theme_color_override("font_color", color)
-	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	lbl.z_index = 10
-	marker.add_child(lbl)
+func _setup_phase3():
+	story_kills = 0
+	# Spawn tamed monster allies in forest
+	call_deferred("_spawn_forest_allies")
 
-	get_tree().current_scene.call_deferred("add_child", marker)
+
+func _spawn_forest_allies():
+	for i in 6:
+		var ally = minion_scene.instantiate()
+		ally.global_position = Vector2(5000 + randf_range(-300, 300), 5000 + randf_range(-300, 300))
+		var player = get_tree().get_first_node_in_group("player")
+		if player:
+			ally.owner_player = player
+		ally.max_hp = 80.0
+		ally.hp = 80.0
+		ally.damage = 15.0
+		ally.modulate = Color(0.6, 1, 0.6)
+		get_tree().current_scene.call_deferred("add_child", ally)
+
+
+func _setup_phase4():
+	story_kills = 0
+	# Spawn tamed boss allies
+	call_deferred("_spawn_battlefield_allies")
+
+
+func _spawn_battlefield_allies():
+	for i in 3:
+		var ally = minion_scene.instantiate()
+		ally.global_position = Vector2(5000 + randf_range(-200, 200), 5000 + randf_range(-200, 200))
+		var player = get_tree().get_first_node_in_group("player")
+		if player:
+			ally.owner_player = player
+		ally.max_hp = 200.0
+		ally.hp = 200.0
+		ally.damage = 30.0
+		ally.speed = 140.0
+		ally.attack_range = 500.0
+		ally.modulate = Color(1, 0.8, 0.3)
+		ally.scale = Vector2(1.5, 1.5)
+		get_tree().current_scene.call_deferred("add_child", ally)
+
+
+func _setup_phase5():
+	# Snow map — items to collect
+	var center = Vector2(5000, 5000)
+	uranium_pos = center + Vector2(randf_range(2000, 3500), randf_range(-2000, 2000))
+	uranium_pos.x = clamp(uranium_pos.x, 500, 9500)
+	uranium_pos.y = clamp(uranium_pos.y, 500, 9500)
+	rocket_body_pos = center + Vector2(randf_range(-3500, -2000), randf_range(-2000, 2000))
+	rocket_body_pos.x = clamp(rocket_body_pos.x, 500, 9500)
+	rocket_body_pos.y = clamp(rocket_body_pos.y, 500, 9500)
+	village_pos = center
+
+	has_uranium = false
+	has_rocket_body = false
+
+	if GameManager.story_step == 11:
+		_create_marker(uranium_pos, Color(0.2, 1, 0.2), "URANIUM")
+	elif GameManager.story_step == 12:
+		_create_marker(rocket_body_pos, Color(0.7, 0.7, 0.7), "ROCKET BODY")
+
+	# Spawn surrounding monsters
+	if GameManager.story_step == 10:
+		call_deferred("_spawn_monster_ring")
+
+
+func _spawn_monster_ring():
+	var center = Vector2(5000, 5000)
+	var swarmer_scene = preload("res://enemies/swarmer.tscn")
+	for i in 40:
+		var angle = i * TAU / 40
+		var enemy = swarmer_scene.instantiate()
+		enemy.global_position = center + Vector2(cos(angle) * 800, sin(angle) * 800)
+		get_tree().current_scene.get_node("Enemies").call_deferred("add_child", enemy)
+		WaveManager.enemies_alive += 1
 
 
 func _process(_delta):
@@ -110,52 +216,115 @@ func _process(_delta):
 	if not player:
 		return
 
-	match GameManager.story_step:
+	var step = GameManager.story_step
+	match step:
 		0:
 			_update_arrow(player, scroll_pos)
 			if player.global_position.distance_to(scroll_pos) < PICKUP_RADIUS:
-				_collect_scroll(player)
+				_advance(1, "You found the scroll! It's a treasure map!")
+				_remove_marker("SCROLL")
+				_create_marker(treasure_pos, Color(1, 0.85, 0), "TREASURE")
 		1:
 			_update_arrow(player, treasure_pos)
 			if player.global_position.distance_to(treasure_pos) < PICKUP_RADIUS:
-				_collect_treasure(player)
+				_advance(2, "You found the treasure! A powerful pistol! Find a safe zone!")
+				_remove_marker("TREASURE")
 		2:
 			_find_nearest_safezone(player)
-			_update_arrow(player, target_safezone_pos)
+			_update_arrow(player, target_pos)
 			if player.in_safe_zone:
-				_reach_safezone()
+				_advance(3, "Safe zone reached! Kill 10 monsters!")
+				story_kills = 0
 		3:
 			arrow_label.visible = false
 			quest_label.text = "Kill 10 monsters! (%d/10)" % story_kills
 			if story_kills >= 10:
-				_win_game()
+				_advance(4, "Well done! A village is under attack! Go save them!")
+				village_pos = Vector2(3000, 3000)
+				_create_marker(village_pos, Color(1, 0.3, 0.1), "BURNING VILLAGE")
 		4:
-			pass
+			_update_arrow(player, village_pos)
+			if player.global_position.distance_to(village_pos) < 200:
+				_advance(5, "The village is burning! Kill the monsters and save the villagers!")
+				_remove_marker("BURNING VILLAGE")
+				_spawn_village_battle()
+		5:
+			arrow_label.visible = false
+			var enemies_left = get_tree().get_nodes_in_group("enemies").size()
+			quest_label.text = "Save the village! Enemies left: %d" % enemies_left
+			if enemies_left <= 0:
+				_show_message("Village saved! Escaping to the forest...")
+				GameManager.story_step = 6
+				GameManager.map_type = GameManager.MapType.FOREST
+				get_tree().create_timer(3.0).timeout.connect(
+					func(): get_tree().reload_current_scene()
+				)
+		6:
+			_advance(7, "The forest! Tamed monsters fight alongside you. Kill 100 enemies!")
+			story_kills = 0
+		7:
+			arrow_label.visible = false
+			quest_label.text = "Forest battle! Kill 100 enemies! (%d/100)" % story_kills
+			if story_kills >= 100:
+				_show_message("Forest cleared! Moving to the battlefield...")
+				GameManager.story_step = 8
+				GameManager.map_type = GameManager.MapType.BATTLEFIELD
+				get_tree().create_timer(3.0).timeout.connect(
+					func(): get_tree().reload_current_scene()
+				)
+		8:
+			_advance(9, "The battlefield! Allies fight bosses! Kill 50 enemies!")
+			story_kills = 0
+		9:
+			arrow_label.visible = false
+			quest_label.text = "Battlefield! Kill 50 enemies! (%d/50)" % story_kills
+			if story_kills >= 50:
+				_show_message("Battle won! But the monsters surround you... Winter comes!")
+				GameManager.story_step = 10
+				GameManager.map_type = GameManager.MapType.SNOW
+				get_tree().create_timer(3.0).timeout.connect(
+					func(): get_tree().reload_current_scene()
+				)
+		10:
+			arrow_label.visible = false
+			quest_label.text = "Surrounded! Break through the monster ring!"
+			# Check if player escaped the ring (distance > 1200 from center)
+			if player.global_position.distance_to(Vector2(5000, 5000)) > 1200:
+				_advance(11, "You broke through! Find the Uranium!")
+				_create_marker(uranium_pos, Color(0.2, 1, 0.2), "URANIUM")
+		11:
+			_update_arrow(player, uranium_pos)
+			if player.global_position.distance_to(uranium_pos) < PICKUP_RADIUS:
+				has_uranium = true
+				_advance(12, "Uranium collected! Now find the Rocket Body!")
+				_remove_marker("URANIUM")
+				_create_marker(rocket_body_pos, Color(0.7, 0.7, 0.7), "ROCKET BODY")
+		12:
+			_update_arrow(player, rocket_body_pos)
+			if player.global_position.distance_to(rocket_body_pos) < PICKUP_RADIUS:
+				has_rocket_body = true
+				_advance(13, "Rocket Body collected! Return to the village center!")
+				_remove_marker("ROCKET BODY")
+				_create_marker(Vector2(5000, 5000), Color(1, 0.85, 0), "VILLAGE")
+		13:
+			_update_arrow(player, Vector2(5000, 5000))
+			if player.global_position.distance_to(Vector2(5000, 5000)) < 100:
+				_advance(14, "Building the rocket...")
+				_remove_marker("VILLAGE")
+				_launch_rocket()
+		14:
+			pass  # Won game handled by _launch_rocket
 
 
-func _collect_scroll(player):
-	scroll_collected = true
-	GameManager.story_step = 1
-	# Remove scroll marker
-	var marker = get_tree().current_scene.get_node_or_null("Marker_SCROLL")
-	if marker:
-		marker.queue_free()
-	# Create treasure marker
-	_create_item_marker(treasure_pos, Color(1, 0.85, 0), "TREASURE")
+func _advance(new_step: int, message: String):
+	GameManager.story_step = new_step
 	_update_quest_text()
-	_show_message("You found a scroll! It's a map to a hidden treasure!")
+	_show_message(message)
 
 
-func _collect_treasure(player):
-	treasure_collected = true
-	GameManager.story_step = 2
-	# Remove treasure marker
-	var marker = get_tree().current_scene.get_node_or_null("Marker_TREASURE")
-	if marker:
-		marker.queue_free()
-	# Give pistol (player starts with one, but this confirms it)
-	_update_quest_text()
-	_show_message("You found the treasure! A powerful pistol! Now find a safe zone!")
+func _on_kill():
+	if GameManager.story_step in [3, 7, 9]:
+		story_kills += 1
 
 
 func _find_nearest_safezone(player):
@@ -164,27 +333,96 @@ func _find_nearest_safezone(player):
 		var dist = player.global_position.distance_to(zone.global_position)
 		if dist < min_dist:
 			min_dist = dist
-			target_safezone_pos = zone.global_position
+			target_pos = zone.global_position
 
 
-func _reach_safezone():
-	GameManager.story_step = 3
-	story_kills = 0
-	_update_quest_text()
-	_show_message("Safe zone reached! Now kill 10 monsters to complete the mission!")
+func _create_marker(pos: Vector2, color: Color, text: String):
+	var marker = Node2D.new()
+	marker.global_position = pos
+	marker.name = "Marker_" + text.replace(" ", "_")
+	var circle = Polygon2D.new()
+	circle.color = Color(color.r, color.g, color.b, 0.4)
+	var points = PackedVector2Array()
+	for i in 16:
+		var a = i * TAU / 16
+		points.append(Vector2(cos(a) * 30, sin(a) * 30))
+	circle.polygon = points
+	circle.z_index = 5
+	marker.add_child(circle)
+	var lbl = Label.new()
+	lbl.text = text
+	lbl.position = Vector2(-30, -40)
+	lbl.add_theme_font_size_override("font_size", 14)
+	lbl.add_theme_color_override("font_color", color)
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	lbl.z_index = 10
+	marker.add_child(lbl)
+	get_tree().current_scene.call_deferred("add_child", marker)
 
 
-func _on_kill():
-	if GameManager.story_step == 3:
-		story_kills += 1
+func _remove_marker(text: String):
+	var name = "Marker_" + text.replace(" ", "_")
+	var marker = get_tree().current_scene.get_node_or_null(name)
+	if marker:
+		marker.queue_free()
 
 
-func _win_game():
-	GameManager.story_step = 4
-	_update_quest_text()
-	# Show win screen
+func _update_quest_text():
+	match GameManager.story_step:
+		0: quest_label.text = "Find the ancient scroll near you!"
+		1: quest_label.text = "Follow the map to the treasure!"
+		2: quest_label.text = "Find a safe zone!"
+		3: quest_label.text = "Kill 10 monsters! (%d/10)" % story_kills
+		4: quest_label.text = "Go to the burning village!"
+		5: quest_label.text = "Save the village!"
+		6: quest_label.text = "Arriving at the forest..."
+		7: quest_label.text = "Forest battle! Kill 100! (%d/100)" % story_kills
+		8: quest_label.text = "Arriving at the battlefield..."
+		9: quest_label.text = "Battlefield! Kill 50! (%d/50)" % story_kills
+		10: quest_label.text = "Break through the monster ring!"
+		11: quest_label.text = "Find the Uranium!"
+		12: quest_label.text = "Find the Rocket Body!"
+		13: quest_label.text = "Return to village!"
+		14: quest_label.text = "Victory!"
+
+
+func _update_arrow(player, target: Vector2):
+	var dir = (target - player.global_position).normalized()
+	var dist = int(player.global_position.distance_to(target) / 10)
+	var vp = get_viewport().get_visible_rect().size
+	var center_screen = vp / 2.0
+	var arrow_pos = center_screen + dir * 250.0
+	arrow_pos.x = clamp(arrow_pos.x, 50, vp.x - 50)
+	arrow_pos.y = clamp(arrow_pos.y, 50, vp.y - 50)
+	arrow_label.position = arrow_pos
+	arrow_label.rotation = dir.angle()
+	arrow_label.text = "%dm >" % dist
+	arrow_label.visible = true
+
+
+func _launch_rocket():
+	# Rocket launch animation + win
+	quest_label.text = "Launching the rocket!"
+	arrow_label.visible = false
+
+	# Kill all enemies on map
+	get_tree().create_timer(2.0).timeout.connect(func():
+		for enemy in get_tree().get_nodes_in_group("enemies"):
+			enemy.call_deferred("queue_free")
+		WaveManager.enemies_alive = 0
+	)
+
+	# Show win screen after delay
+	get_tree().create_timer(4.0).timeout.connect(func():
+		_show_win_screen()
+	)
+
+
+func _show_win_screen():
+	GameManager.story_step = 14
+
 	var overlay = ColorRect.new()
-	overlay.color = Color(0, 0, 0, 0.7)
+	overlay.color = Color(0, 0, 0, 0.8)
 	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(overlay)
 
@@ -195,7 +433,7 @@ func _win_game():
 
 	var vbox = VBoxContainer.new()
 	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	vbox.add_theme_constant_override("separation", 20)
+	vbox.add_theme_constant_override("separation", 15)
 	vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	center.add_child(vbox)
 
@@ -208,14 +446,14 @@ func _win_game():
 	vbox.add_child(title)
 
 	var sub = Label.new()
-	sub.text = "Mission Complete! You survived the arena!"
+	sub.text = "The rocket destroyed the monster horde!\nThe world is saved!"
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	sub.add_theme_font_size_override("font_size", 24)
 	sub.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vbox.add_child(sub)
 
 	var stats = Label.new()
-	stats.text = "Score: $%d | Kills: %d | Waves: %d" % [GameManager.score, GameManager.kills, WaveManager.current_wave]
+	stats.text = "Score: $%d | Total Kills: %d" % [GameManager.score, GameManager.kills]
 	stats.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	stats.add_theme_font_size_override("font_size", 20)
 	stats.add_theme_color_override("font_color", Color(1, 0.85, 0))
@@ -244,40 +482,17 @@ func _win_game():
 	process_mode = Node.PROCESS_MODE_ALWAYS
 
 
-func _update_quest_text():
-	match GameManager.story_step:
-		0: quest_label.text = "Find the ancient scroll near you!"
-		1: quest_label.text = "Follow the map to the treasure!"
-		2: quest_label.text = "Find a safe zone to open the shop!"
-		3: quest_label.text = "Kill 10 monsters! (%d/10)" % story_kills
-		4: quest_label.text = "Mission Complete!"
-
-
-func _update_arrow(player, target: Vector2):
-	var dir = (target - player.global_position).normalized()
-	var dist = int(player.global_position.distance_to(target) / 10)
-	var vp = get_viewport().get_visible_rect().size
-	var center_screen = vp / 2.0
-	var arrow_pos = center_screen + dir * 250.0
-	arrow_pos.x = clamp(arrow_pos.x, 50, vp.x - 50)
-	arrow_pos.y = clamp(arrow_pos.y, 50, vp.y - 50)
-	arrow_label.position = arrow_pos
-	arrow_label.rotation = dir.angle()
-	arrow_label.text = "%dm >" % dist
-	arrow_label.visible = true
-
-
 func _show_message(text: String):
 	var msg = Label.new()
 	msg.text = text
 	msg.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	msg.position = Vector2(get_viewport().get_visible_rect().size.x / 2 - 200, 120)
+	msg.position = Vector2(get_viewport().get_visible_rect().size.x / 2 - 250, 120)
 	msg.add_theme_font_size_override("font_size", 20)
 	msg.add_theme_color_override("font_color", Color(0.3, 1, 0.3))
-	msg.custom_minimum_size = Vector2(400, 0)
+	msg.custom_minimum_size = Vector2(500, 0)
 	msg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	msg.z_index = 100
 	add_child(msg)
 	var tween = msg.create_tween()
-	tween.tween_property(msg, "modulate:a", 0.0, 4.0)
+	tween.tween_property(msg, "modulate:a", 0.0, 5.0)
 	tween.chain().tween_callback(msg.queue_free)
