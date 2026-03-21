@@ -40,19 +40,34 @@ func _ready():
 	add_to_group("player")
 
 
+func _is_local() -> bool:
+	return not NetworkManager.is_online or is_multiplayer_authority()
+
+
 func _physics_process(_delta):
 	if is_dead:
 		return
-	_handle_movement()
-	_handle_aim()
+	if _is_local():
+		_handle_movement()
+		_handle_aim()
+		if NetworkManager.is_online:
+			_sync_position.rpc(global_position, rotation)
 
 
 func _process(delta):
 	if is_dead:
 		return
-	_handle_shooting()
-	_handle_summon(delta)
-	_process_contact_damage(delta)
+	if _is_local():
+		_handle_shooting()
+		_handle_summon(delta)
+		_process_contact_damage(delta)
+
+
+@rpc("any_peer", "unreliable")
+func _sync_position(pos: Vector2, rot: float):
+	if not _is_local():
+		global_position = pos
+		rotation = rot
 
 
 func _handle_summon(delta):

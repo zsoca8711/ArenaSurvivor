@@ -124,6 +124,8 @@ func _add_button(parent: Control, text: String, callback: Callable):
 
 
 func _on_single_player():
+	NetworkManager.is_host = false
+	NetworkManager.is_online = false
 	get_tree().change_scene_to_file("res://main/main.tscn")
 
 
@@ -134,8 +136,25 @@ func _on_multiplayer():
 
 
 func _on_create_game():
-	var code = "%05d" % (randi() % 100000)
-	status_label.text = "Room code: %s\nWaiting for players... (coming soon)" % code
+	if NetworkManager.create_server():
+		status_label.text = "Room code: %s\nIP: %s\nWaiting for players..." % [
+			NetworkManager.room_code,
+			NetworkManager._get_local_ip()
+		]
+		NetworkManager.player_connected.connect(_on_player_joined)
+	else:
+		status_label.text = "Failed to create server!"
+
+
+func _on_player_joined(_id: int):
+	status_label.text = "Room code: %s\n%d player(s) connected!\nStarting..." % [
+		NetworkManager.room_code,
+		NetworkManager.connected_peers.size()
+	]
+	# Start game after short delay
+	get_tree().create_timer(1.5).timeout.connect(
+		func(): get_tree().change_scene_to_file("res://main/main.tscn")
+	)
 
 
 func _on_join_game():
@@ -143,10 +162,25 @@ func _on_join_game():
 	if code.length() != 5 or not code.is_valid_int():
 		status_label.text = "Enter a valid 5-digit code"
 		return
-	status_label.text = "Joining room %s... (coming soon)" % code
+	status_label.text = "Searching for room %s..." % code
+	NetworkManager.joined_server.connect(_on_joined_server)
+	NetworkManager.join_failed.connect(_on_join_failed)
+	NetworkManager.join_by_code(code)
+
+
+func _on_joined_server():
+	status_label.text = "Connected! Starting game..."
+	get_tree().create_timer(1.0).timeout.connect(
+		func(): get_tree().change_scene_to_file("res://main/main.tscn")
+	)
+
+
+func _on_join_failed():
+	status_label.text = "Failed to connect!"
 
 
 func _on_back():
+	NetworkManager.disconnect_from_game()
 	mp_center.visible = false
 	center.visible = true
 

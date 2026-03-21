@@ -114,6 +114,7 @@ func _on_main_menu():
 	get_tree().paused = false
 	GameManager.reset()
 	WaveManager.reset()
+	NetworkManager.disconnect_from_game()
 	get_tree().change_scene_to_file("res://ui/main_menu.tscn")
 
 

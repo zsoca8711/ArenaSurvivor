@@ -1,7 +1,8 @@
 extends Node2D
 
-@onready var player = $Player
 @onready var enemies_container = $Enemies
+
+var player_scene = preload("res://player/player.tscn")
 
 var enemy_scenes = {
 	"swarmer": preload("res://enemies/swarmer.tscn"),
@@ -16,16 +17,100 @@ var boss_scenes = {
 	"giant_tank": preload("res://enemies/boss_giant_tank.tscn"),
 }
 
+var players: Dictionary = {}  # peer_id -> player node
+
 
 func _ready():
 	WaveManager.spawn_requested.connect(_on_spawn_requested)
 	WaveManager.boss_spawn_requested.connect(_on_boss_spawn_requested)
 	WaveManager.fortress_activated.connect(_on_fortress_activated)
 	GameManager.start_game()
-	GameManager.health_changed.emit(player.hp, player.max_hp)
+
+	if NetworkManager.is_online:
+		_setup_multiplayer()
+	else:
+		_spawn_local_player()
+
 	get_tree().create_timer(2.0).timeout.connect(
 		func(): WaveManager.start_game()
 	)
+
+
+func _spawn_local_player():
+	var player = player_scene.instantiate()
+	player.global_position = Vector2(5000, 5000)
+	add_child(player)
+	players[1] = player
+	GameManager.health_changed.emit(player.hp, player.max_hp)
+
+
+func _setup_multiplayer():
+	# Spawn local player
+	var my_id = multiplayer.get_unique_id()
+	_spawn_networked_player(my_id, Vector2(5000, 5000))
+
+	if NetworkManager.is_host:
+		# Spawn players for already-connected peers
+		var offset = 0
+		for peer_id in NetworkManager.connected_peers:
+			offset += 1
+			_spawn_networked_player(peer_id, Vector2(5000 + offset * 100, 5000))
+		# Listen for new connections
+		multiplayer.peer_connected.connect(_on_mp_peer_connected)
+		multiplayer.peer_disconnected.connect(_on_mp_peer_disconnected)
+	else:
+		multiplayer.peer_connected.connect(_on_mp_peer_connected)
+		multiplayer.peer_disconnected.connect(_on_mp_peer_disconnected)
+		# Ask host to tell us about existing players
+		_request_players.rpc_id(1)
+
+	var local_player = players.get(my_id)
+	if local_player:
+		GameManager.health_changed.emit(local_player.hp, local_player.max_hp)
+
+
+func _spawn_networked_player(peer_id: int, pos: Vector2):
+	if players.has(peer_id):
+		return
+	var player = player_scene.instantiate()
+	player.name = "Player_%d" % peer_id
+	player.set_multiplayer_authority(peer_id)
+	player.global_position = pos
+	# Different color for other players
+	if peer_id != multiplayer.get_unique_id():
+		player.modulate = Color(0.5, 1.0, 0.5)  # Green tint for others
+	add_child(player)
+	players[peer_id] = player
+
+
+@rpc("any_peer", "reliable")
+func _request_players():
+	if not NetworkManager.is_host:
+		return
+	var sender_id = multiplayer.get_remote_sender_id()
+	# Tell the new player about all existing players
+	for peer_id in players:
+		var pos = players[peer_id].global_position
+		_spawn_remote_player.rpc_id(sender_id, peer_id, pos)
+
+
+@rpc("authority", "reliable")
+func _spawn_remote_player(peer_id: int, pos: Vector2):
+	_spawn_networked_player(peer_id, pos)
+
+
+func _on_mp_peer_connected(peer_id: int):
+	if NetworkManager.is_host:
+		_spawn_networked_player(peer_id, Vector2(5000 + randf_range(-100, 100), 5000 + randf_range(-100, 100)))
+		# Tell everyone about the new player
+		var pos = players[peer_id].global_position
+		_spawn_remote_player.rpc(peer_id, pos)
+
+
+func _on_mp_peer_disconnected(peer_id: int):
+	if players.has(peer_id):
+		players[peer_id].queue_free()
+		players.erase(peer_id)
 
 
 func _on_spawn_requested(position: Vector2, enemy_type: String):
