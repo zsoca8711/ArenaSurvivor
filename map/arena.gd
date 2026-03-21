@@ -37,6 +37,7 @@ var fence_tex = preload("res://assets/sprites/fence.png")
 var fence_yellow = preload("res://assets/sprites/fence_yellow.png")
 var oil_large = preload("res://assets/sprites/oil_large.png")
 var oil_small = preload("res://assets/sprites/oil_small.png")
+var machine_gunner_scene = preload("res://enemies/machine_gunner.tscn")
 
 # Road grid positions
 var h_roads = [1500, 3500, 5000, 6500, 8500]
@@ -49,6 +50,7 @@ func _ready():
 	_create_road_network()
 	_create_roadside_trees()
 	_create_scattered_decorations()
+	_create_bases()
 	_create_fortress()
 
 
@@ -249,6 +251,59 @@ func _place_obstacle(pos: Vector2, tex: Texture2D, col_size: Vector2):
 	spr.texture = tex
 	body.add_child(spr)
 	add_child(body)
+
+
+# --- BASES (small outposts at road intersections) ---
+func _create_bases():
+	# Place bases at some road intersections (not all, and not at fortress or center)
+	var base_positions = []
+	var fp = GameManager.FORTRESS_POS
+	var center = GameManager.ARENA_SIZE / 2.0
+
+	for hx in h_roads:
+		for vy in v_roads:
+			var pos = Vector2(hx, vy)
+			# Skip center (player spawn) and fortress area
+			if pos.distance_to(center) < 500:
+				continue
+			if pos.distance_to(fp) < 600:
+				continue
+			# 60% chance to place a base at this intersection
+			if randf() < 0.6:
+				base_positions.append(pos)
+
+	for pos in base_positions:
+		_create_base(pos)
+
+
+func _create_base(center: Vector2):
+	var size = randi_range(150, 250)
+	var half = size / 2.0
+
+	# Fence perimeter with gate
+	_create_fence_line(center + Vector2(-half, -half), center + Vector2(half, -half), true)
+	_create_fence_line(center + Vector2(-half, half), center + Vector2(half, half), true)
+	_create_fence_line(center + Vector2(-half, -half), center + Vector2(-half, half), false)
+	_create_fence_line(center + Vector2(half, -half), center + Vector2(half, half), false)
+
+	# Internal obstacles (sandbags, barricades, crates)
+	var obstacle_textures = [sandbag_tex, sandbag_beige, barricade_tex, crate_tex, crate_metal]
+	for i in randi_range(4, 8):
+		var tex = obstacle_textures[randi() % obstacle_textures.size()]
+		var pos = center + Vector2(randf_range(-half + 30, half - 30), randf_range(-half + 30, half - 30))
+		_place_obstacle(pos, tex, Vector2(32, 24))
+
+	# Barrels
+	for i in randi_range(2, 4):
+		var tex = [barrel_tex, barrel_red, barrel_green][randi() % 3]
+		var pos = center + Vector2(randf_range(-half + 20, half - 20), randf_range(-half + 20, half - 20))
+		_place_obstacle(pos, tex, Vector2(20, 20))
+
+	# Machine Gunners (2-4 per base)
+	for i in randi_range(2, 4):
+		var gunner = machine_gunner_scene.instantiate()
+		gunner.global_position = center + Vector2(randf_range(-half + 30, half - 30), randf_range(-half + 30, half - 30))
+		call_deferred("add_child", gunner)
 
 
 # --- FORTRESS ---
