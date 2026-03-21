@@ -187,18 +187,28 @@ func _get_enemy_type() -> String:
 
 
 func _get_boss_type() -> String:
+	var player = get_tree().get_first_node_in_group("player")
+	var player_hp = player.hp if player else 0
 	var roll = randf()
-	if roll < 0.05:
-		return "god"          # 5% — ultra rare
-	elif roll < 0.10:
-		return "satan"        # 5% — ultra rare, drops Megacluster
-	elif roll < 0.18:
-		return "demogorgon"   # 8%
-	elif roll < 0.30:
-		return "vecna"        # 12%
-	elif roll < 0.48:
-		return "mind_flayer"  # 18%
-	return "giant_tank"       # 52% — most common
+	if player_hp > 500:
+		if roll < 0.05:
+			return "god"
+		elif roll < 0.10:
+			return "satan"
+		elif roll < 0.18:
+			return "demogorgon"
+		elif roll < 0.30:
+			return "vecna"
+		elif roll < 0.48:
+			return "mind_flayer"
+	else:
+		if roll < 0.10:
+			return "demogorgon"
+		elif roll < 0.25:
+			return "vecna"
+		elif roll < 0.45:
+			return "mind_flayer"
+	return "giant_tank"
 
 
 func _get_max_horde(enemy_type: String) -> int:
