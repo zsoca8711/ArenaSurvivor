@@ -6,6 +6,7 @@ extends Area2D
 var aoe_radius: float = 0.0
 var bullet_color: Color = Color(1, 0.9, 0.2)
 var homing: bool = false
+var from_boss: bool = false
 var homing_target: Node2D = null
 var homing_strength: float = 8.0
 
@@ -42,9 +43,11 @@ func _find_homing_target():
 func _on_body_entered(body: Node2D):
 	if aoe_radius > 0:
 		_explode()
-	else:
-		if body.is_in_group("enemies"):
-			body.take_damage(damage, bullet_color)
+	elif body.is_in_group("enemies"):
+		body.take_damage(damage, bullet_color)
+	elif body.is_in_group("player") and from_boss:
+		body._last_damage_source_is_boss = true
+		body.take_damage(damage)
 			if homing:
 				var player = get_tree().get_first_node_in_group("player")
 				if player and player.has_method("on_radio_staff_kill"):

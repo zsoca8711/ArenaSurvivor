@@ -51,6 +51,7 @@ func _fire():
 		proj.rotation = rotation + spread
 		proj.damage = 20.0
 		proj.speed = 350.0
+		proj.from_boss = true
 		get_tree().current_scene.call_deferred("add_child", proj)
 
 

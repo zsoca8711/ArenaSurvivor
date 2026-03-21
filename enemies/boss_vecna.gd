@@ -117,6 +117,7 @@ func _fire_vine():
 	vine.lifetime = 4.0
 	vine.bullet_color = Color(0.08, 0.0, 0.08)
 	vine.homing = true
+	vine.from_boss = true
 	# Vines target players, not enemies
 	vine.collision_layer = 0
 	vine.collision_mask = 9  # Player (1) + Walls (8)

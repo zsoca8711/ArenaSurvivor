@@ -203,12 +203,16 @@ func get_weapon_name() -> String:
 	return WEAPONS[current_weapon]["name"]
 
 
+var _last_damage_source_is_boss: bool = false
+
+
 func _process_contact_damage(delta):
 	damage_cooldown -= delta
 	if damage_cooldown > 0:
 		return
 	for body in $Hurtbox.get_overlapping_bodies():
 		if body.is_in_group("enemies"):
+			_last_damage_source_is_boss = body.is_in_group("bosses")
 			take_damage(body.contact_damage)
 			damage_cooldown = DAMAGE_COOLDOWN_TIME
 			break
@@ -227,13 +231,32 @@ func take_damage(amount: float):
 				$Body.modulate = Color(1, 1, 1)
 	)
 	if hp <= 0:
-		_die()
+		if _last_damage_source_is_boss:
+			_boss_death()
+		else:
+			_die()
 
 
 func _die():
 	is_dead = true
 	$Body.modulate = Color(0.5, 0.5, 0.5, 0.5)
 	GameManager.on_player_died()
+
+
+func _boss_death():
+	# Boss kill: no game over, respawn with 10% max HP, skip to next wave
+	hp = max_hp * 0.1
+	GameManager.health_changed.emit(hp, max_hp)
+	_last_damage_source_is_boss = false
+	# Flash white to show respawn
+	$Body.modulate = Color(1, 1, 1, 0.3)
+	get_tree().create_timer(0.5).timeout.connect(
+		func():
+			if is_instance_valid(self):
+				$Body.modulate = Color(1, 1, 1)
+	)
+	# Skip to next wave
+	WaveManager.skip_wave()
 
 
 func _on_fire_timer_timeout():
