@@ -10,6 +10,11 @@ var farm_hay_tex = preload("res://assets/sprites/farm_hay.png")
 var farm_corn_tex = preload("res://assets/sprites/farm_corn.png")
 
 const PUSH_FORCE = 300.0
+const MAX_STAY_TIME = 10.0
+
+var stay_timer: float = 0.0
+var protection_active: bool = true
+var timer_label: Label
 
 
 func _ready():
@@ -72,15 +77,15 @@ func _build_visual():
 		add_child(corn)
 
 	# "SAFE ZONE" label
-	var label = Label.new()
-	label.text = "SAFE ZONE"
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.position = Vector2(-50, -half.y - 20)
-	label.add_theme_font_size_override("font_size", 14)
-	label.add_theme_color_override("font_color", Color(0.2, 0.9, 0.2))
-	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	label.z_index = 10
-	add_child(label)
+	timer_label = Label.new()
+	timer_label.text = "SAFE ZONE"
+	timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	timer_label.position = Vector2(-50, -half.y - 20)
+	timer_label.add_theme_font_size_override("font_size", 14)
+	timer_label.add_theme_color_override("font_color", Color(0.2, 0.9, 0.2))
+	timer_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	timer_label.z_index = 10
+	add_child(timer_label)
 
 	# Collision shape
 	var shape = CollisionShape2D.new()
@@ -91,17 +96,41 @@ func _build_visual():
 
 
 func _physics_process(delta):
-	# Push enemies away from safe zone
-	for body in get_overlapping_bodies():
-		if body.is_in_group("enemies"):
-			var push_dir = (body.global_position - global_position).normalized()
-			body.velocity = push_dir * PUSH_FORCE
-			body.move_and_slide()
-
-	# Check if player is inside — disable shooting
 	var player = get_tree().get_first_node_in_group("player")
+	var player_inside = player and _is_inside(player.global_position)
+
+	if player_inside:
+		stay_timer += delta
+		if stay_timer >= MAX_STAY_TIME:
+			protection_active = false
+	else:
+		# Reset when player leaves
+		stay_timer = 0.0
+		protection_active = true
+
+	# Push enemies away only if protection is active
+	if protection_active:
+		for body in get_overlapping_bodies():
+			if body.is_in_group("enemies"):
+				var push_dir = (body.global_position - global_position).normalized()
+				body.velocity = push_dir * PUSH_FORCE
+				body.move_and_slide()
+
+	# Update player safe zone state
 	if player:
-		player.in_safe_zone = _is_inside(player.global_position)
+		player.in_safe_zone = player_inside and protection_active
+
+	# Update label
+	if player_inside and protection_active:
+		var remaining = MAX_STAY_TIME - stay_timer
+		timer_label.text = "SAFE ZONE  %ds" % ceili(remaining)
+		timer_label.add_theme_color_override("font_color", Color(0.2, 0.9, 0.2) if remaining > 3 else Color(1, 0.3, 0.1))
+	elif not protection_active:
+		timer_label.text = "EXPIRED!"
+		timer_label.add_theme_color_override("font_color", Color(1, 0.1, 0.1))
+	else:
+		timer_label.text = "SAFE ZONE"
+		timer_label.add_theme_color_override("font_color", Color(0.2, 0.9, 0.2))
 
 
 func _is_inside(pos: Vector2) -> bool:
