@@ -141,7 +141,8 @@ func _on_create_game():
 			NetworkManager.room_code,
 			NetworkManager._get_local_ip()
 		]
-		NetworkManager.player_connected.connect(_on_player_joined)
+		if not NetworkManager.player_connected.is_connected(_on_player_joined):
+			NetworkManager.player_connected.connect(_on_player_joined)
 	else:
 		status_label.text = "Failed to create server!"
 
@@ -163,8 +164,10 @@ func _on_join_game():
 		status_label.text = "Enter a valid 5-digit code"
 		return
 	status_label.text = "Searching for room %s..." % code
-	NetworkManager.joined_server.connect(_on_joined_server)
-	NetworkManager.join_failed.connect(_on_join_failed)
+	if not NetworkManager.joined_server.is_connected(_on_joined_server):
+		NetworkManager.joined_server.connect(_on_joined_server)
+	if not NetworkManager.join_failed.is_connected(_on_join_failed):
+		NetworkManager.join_failed.connect(_on_join_failed)
 	NetworkManager.join_by_code(code)
 
 
