@@ -39,6 +39,21 @@ var oil_large = preload("res://assets/sprites/oil_large.png")
 var oil_small = preload("res://assets/sprites/oil_small.png")
 var machine_gunner_scene = preload("res://enemies/machine_gunner.tscn")
 var safe_zone_scene = preload("res://map/safe_zone.tscn")
+var sandbag_open = preload("res://assets/sprites/sandbag_open.png")
+var wire_crooked = preload("res://assets/sprites/wire_crooked.png")
+var wire_straight = preload("res://assets/sprites/wire_straight.png")
+var tracks_double = preload("res://assets/sprites/tracks_double.png")
+var tracks_large = preload("res://assets/sprites/tracks_large.png")
+var tracks_small = preload("res://assets/sprites/tracks_small.png")
+var barrel_rust = preload("res://assets/sprites/barrel_rust.png")
+var barrel_black = preload("res://assets/sprites/barrel_black.png")
+var crate_metal_side = preload("res://assets/sprites/crate_metal_side.png")
+var crate_wood_side = preload("res://assets/sprites/crate_wood_side.png")
+var special_barrel1 = preload("res://assets/sprites/special_barrel1.png")
+var special_barrel2 = preload("res://assets/sprites/special_barrel2.png")
+var special_barrel3 = preload("res://assets/sprites/special_barrel3.png")
+var tree_leaf = preload("res://assets/sprites/tree_leaf.png")
+var tree_brown_leaf = preload("res://assets/sprites/tree_brown_leaf.png")
 
 # Road grid positions
 var h_roads = [1500, 3500, 5000, 6500, 8500]
@@ -218,14 +233,59 @@ func _create_scattered_decorations():
 			var tex = [crate_tex, crate_metal][randi() % 2]
 			_place_obstacle(center + Vector2(randf_range(-25, 25), randf_range(-25, 25)), tex, Vector2(36, 36))
 
-	# Sandbag walls (15 small walls scattered)
-	for i in 15:
+	# Sandbag walls (20 small walls scattered)
+	for i in 20:
 		var start = _random_pos_outside_fortress()
 		var horizontal = randf() > 0.5
-		for j in randi_range(2, 5):
+		for j in randi_range(2, 6):
 			var offset = Vector2(j * 38, 0) if horizontal else Vector2(0, j * 26)
-			var tex = [sandbag_tex, sandbag_beige][randi() % 2]
+			var tex = [sandbag_tex, sandbag_beige, sandbag_open][randi() % 3]
 			_place_obstacle(start + offset, tex, Vector2(36, 22))
+
+	# Wire fences (30 scattered)
+	for i in 30:
+		var pos = _random_pos_outside_fortress()
+		var tex = [wire_crooked, wire_straight][randi() % 2]
+		_place_obstacle(pos, tex, Vector2(40, 10))
+
+	# Tank tracks on ground (40 — decoration only)
+	for i in 40:
+		var spr = Sprite2D.new()
+		spr.texture = [tracks_double, tracks_large, tracks_small][randi() % 3]
+		spr.position = _random_pos_outside_fortress()
+		spr.rotation = randf() * TAU
+		spr.z_index = -7
+		add_child(spr)
+
+	# Rust/black barrel clusters (20)
+	for i in 20:
+		var center = _random_pos_outside_fortress()
+		for j in randi_range(1, 3):
+			var tex = [barrel_rust, barrel_black][randi() % 2]
+			_place_obstacle(center + Vector2(randf_range(-18, 18), randf_range(-18, 18)), tex, Vector2(20, 20))
+
+	# Side crates (15)
+	for i in 15:
+		var tex = [crate_wood_side, crate_metal_side][randi() % 2]
+		_place_obstacle(_random_pos_outside_fortress(), tex, Vector2(34, 34))
+
+	# Special barrels / destroyed vehicles (20)
+	for i in 20:
+		var tex = [special_barrel1, special_barrel2, special_barrel3][randi() % 3]
+		var spr = Sprite2D.new()
+		spr.texture = tex
+		spr.position = _random_pos_outside_fortress()
+		spr.rotation = randf() * TAU
+		spr.z_index = 0
+		add_child(spr)
+
+	# Leaf piles (25 — decoration)
+	for i in 25:
+		var spr = Sprite2D.new()
+		spr.texture = [tree_leaf, tree_brown_leaf][randi() % 2]
+		spr.position = _random_pos_outside_fortress()
+		spr.z_index = -6
+		add_child(spr)
 
 
 func _random_pos_outside_fortress() -> Vector2:
