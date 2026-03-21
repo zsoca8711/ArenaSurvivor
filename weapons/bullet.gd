@@ -36,4 +36,4 @@ func _explode():
 
 
 func _on_lifetime_timer_timeout():
-	queue_free()
+	call_deferred("queue_free")

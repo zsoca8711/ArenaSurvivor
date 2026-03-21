@@ -28,7 +28,7 @@ func _physics_process(_delta):
 		rotation = direction.angle()
 		# Explode when close to player
 		if global_position.distance_to(target.global_position) < 80:
-			_explode()
+			call_deferred("_explode")
 
 
 func _find_target():

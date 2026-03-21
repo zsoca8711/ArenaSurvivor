@@ -26,7 +26,7 @@ var lifetime: float = 15.0
 func _ready():
 	$Body.color = COLORS.get(pickup_type, Color.WHITE)
 	_spawn_drop_text()
-	get_tree().create_timer(lifetime).timeout.connect(queue_free)
+	get_tree().create_timer(lifetime).timeout.connect(func(): call_deferred("queue_free"))
 
 
 func _spawn_drop_text():

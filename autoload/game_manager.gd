@@ -65,7 +65,7 @@ func try_drop_loot(pos: Vector2):
 		pickup.pickup_type = 3  # DAMAGE_BOOST
 	else:
 		pickup.pickup_type = 4  # MONEY
-	get_tree().current_scene.add_child(pickup)
+	get_tree().current_scene.call_deferred("add_child", pickup)
 
 
 func reset():

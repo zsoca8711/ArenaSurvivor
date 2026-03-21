@@ -34,18 +34,18 @@ func _ready():
 	add_to_group("player")
 
 
-func _physics_process(delta):
+func _physics_process(_delta):
 	if is_dead:
 		return
 	_handle_movement()
 	_handle_aim()
-	_process_contact_damage(delta)
 
 
-func _process(_delta):
+func _process(delta):
 	if is_dead:
 		return
 	_handle_shooting()
+	_process_contact_damage(delta)
 
 
 func _input(event):
