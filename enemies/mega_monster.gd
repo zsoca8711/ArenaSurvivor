@@ -27,7 +27,7 @@ func _physics_process(delta):
 		rotation = direction.angle()
 
 		fire_timer -= delta
-		if fire_timer <= 0:
+		if fire_timer <= 0 and not target.get("in_safe_zone"):
 			_fire()
 			fire_timer = fire_rate
 

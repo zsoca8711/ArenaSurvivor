@@ -142,8 +142,8 @@ var in_safe_zone: bool = false
 func _input(event):
 	if is_dead or get_tree().paused:
 		return
-	# Enter nearby vehicle with E
-	if event.is_action_pressed("open_shop") and not in_vehicle:
+	# Enter nearby vehicle with E (not in safe zone, safe zone uses E for shop)
+	if event.is_action_pressed("open_shop") and not in_vehicle and not in_safe_zone:
 		var nearest = _find_nearest_vehicle()
 		if nearest and not WaveManager.buy_phase_active:
 			nearest.enter_vehicle(self)

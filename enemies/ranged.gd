@@ -36,9 +36,9 @@ func _physics_process(delta):
 			velocity = Vector2.ZERO
 		move_and_slide()
 
-		# Shoot
+		# Shoot (not if player in safe zone)
 		fire_timer -= delta
-		if fire_timer <= 0 and dist < 800:
+		if fire_timer <= 0 and dist < 800 and not target.get("in_safe_zone"):
 			_fire()
 			fire_timer = fire_rate
 
