@@ -57,7 +57,7 @@ func _fire():
 	get_tree().current_scene.add_child(proj)
 
 
-func take_damage(amount: float):
+func take_damage(amount: float, _source_color: Color = Color.WHITE):
 	hp -= amount
 	$Body.modulate = Color(1, 0.3, 0.3)
 	get_tree().create_timer(0.05).timeout.connect(

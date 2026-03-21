@@ -11,9 +11,15 @@ var enemy_scenes = {
 	"mega_monster": preload("res://enemies/mega_monster.tscn"),
 }
 
+var boss_scenes = {
+	"demogorgon": preload("res://enemies/boss_demogorgon.tscn"),
+	"giant_tank": preload("res://enemies/boss_giant_tank.tscn"),
+}
+
 
 func _ready():
 	WaveManager.spawn_requested.connect(_on_spawn_requested)
+	WaveManager.boss_spawn_requested.connect(_on_boss_spawn_requested)
 	WaveManager.fortress_activated.connect(_on_fortress_activated)
 	GameManager.start_game()
 	GameManager.health_changed.emit(player.hp, player.max_hp)
@@ -29,11 +35,20 @@ func _on_spawn_requested(position: Vector2, enemy_type: String):
 	enemies_container.add_child(enemy)
 
 
+func _on_boss_spawn_requested(position: Vector2, boss_type: String):
+	var scene = boss_scenes.get(boss_type)
+	if scene == null:
+		return
+	var boss = scene.instantiate()
+	boss.global_position = position
+	enemies_container.add_child(boss)
+	WaveManager.enemies_alive += 1
+
+
 func _on_fortress_activated():
 	var fp = GameManager.FORTRESS_POS
 	var fhs = GameManager.FORTRESS_SIZE / 2.0
 
-	# Spawn 15 enemies inside the fortress
 	var fortress_types = ["swarmer", "tank", "ranged", "exploder", "swarmer", "ranged"]
 	for i in 15:
 		var type = fortress_types[randi() % fortress_types.size()]
@@ -45,7 +60,6 @@ func _on_fortress_activated():
 		enemies_container.add_child(enemy)
 		WaveManager.fortress_enemies_alive += 1
 
-	# Spawn boss (mega_monster with boosted stats)
 	var boss = enemy_scenes["mega_monster"].instantiate()
 	boss.global_position = fp
 	boss.max_hp = 800.0

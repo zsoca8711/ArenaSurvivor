@@ -1,9 +1,10 @@
 extends CharacterBody2D
 
-@export var speed: float = 150.0
-@export var max_hp: float = 30.0
-@export var contact_damage: float = 10.0
-@export var money_reward: int = 50
+# Demogorgon — only flamethrower can damage it!
+@export var speed: float = 100.0
+@export var max_hp: float = 500.0
+@export var contact_damage: float = 40.0
+@export var money_reward: int = 3000
 
 var hp: float
 var target: Node2D
@@ -12,6 +13,7 @@ var target: Node2D
 func _ready():
 	hp = max_hp
 	add_to_group("enemies")
+	add_to_group("bosses")
 	_find_target()
 
 
@@ -26,17 +28,13 @@ func _physics_process(_delta):
 func _find_target():
 	var players = get_tree().get_nodes_in_group("player")
 	if players.size() > 0:
-		var closest: Node2D = null
-		var min_dist = INF
-		for p in players:
-			var dist = global_position.distance_to(p.global_position)
-			if dist < min_dist:
-				min_dist = dist
-				closest = p
-		target = closest
+		target = players[0]
 
 
-func take_damage(amount: float, _source_color: Color = Color.WHITE):
+func take_damage(amount: float, source_color: Color = Color.WHITE):
+	# Only flamethrower (orange color) can damage the Demogorgon
+	if not _is_flamethrower(source_color):
+		return
 	hp -= amount
 	$Body.modulate = Color(1, 0.3, 0.3)
 	get_tree().create_timer(0.05).timeout.connect(
@@ -48,9 +46,16 @@ func take_damage(amount: float, _source_color: Color = Color.WHITE):
 		die()
 
 
+func _is_flamethrower(color: Color) -> bool:
+	# Flamethrower color is Color(1, 0.5, 0.0)
+	return color.r > 0.9 and color.g > 0.3 and color.g < 0.7 and color.b < 0.2
+
+
 func die():
 	GameManager.add_money(money_reward)
 	GameManager.enemy_killed()
 	WaveManager.enemy_died()
+	GameManager.try_drop_loot(global_position)
+	GameManager.try_drop_loot(global_position)
 	GameManager.try_drop_loot(global_position)
 	call_deferred("queue_free")

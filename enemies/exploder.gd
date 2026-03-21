@@ -37,7 +37,7 @@ func _find_target():
 		target = players[0]
 
 
-func take_damage(amount: float):
+func take_damage(amount: float, _source_color: Color = Color.WHITE):
 	hp -= amount
 	$Body.modulate = Color(1, 1, 0.3)
 	get_tree().create_timer(0.05).timeout.connect(

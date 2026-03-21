@@ -5,6 +5,7 @@ signal wave_completed(wave_number: int)
 signal buy_phase_started(duration: float)
 signal buy_phase_ended
 signal spawn_requested(position: Vector2, enemy_type: String)
+signal boss_spawn_requested(position: Vector2, boss_type: String)
 signal fortress_activated
 
 var current_wave: int = 0
@@ -104,6 +105,12 @@ func _start_next_wave():
 		fortress_spawned = true
 		fortress_activated.emit()
 
+	# Boss every 2nd wave
+	if current_wave % 2 == 0:
+		var boss_pos = _random_edge_position()
+		var boss_type = _get_boss_type()
+		boss_spawn_requested.emit(boss_pos, boss_type)
+
 
 func enemy_died():
 	enemies_alive -= 1
@@ -177,6 +184,13 @@ func _get_enemy_type() -> String:
 			return "exploder"
 		else:
 			return "mega_monster"
+
+
+func _get_boss_type() -> String:
+	# Demogorgon is rare (20% chance), Giant Tank is common (80%)
+	if randf() < 0.2:
+		return "demogorgon"
+	return "giant_tank"
 
 
 func _get_max_horde(enemy_type: String) -> int:

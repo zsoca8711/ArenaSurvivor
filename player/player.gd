@@ -16,14 +16,14 @@ const DAMAGE_COOLDOWN_TIME = 0.5
 
 # Weapon system
 const WEAPONS = {
-	"pistol": {"name": "Pistol", "damage": 10, "fire_rate": 0.3, "speed": 800, "spread": 0.0, "bullets": 1, "lifetime": 3.0, "aoe": 0.0, "color": Color(1, 0.9, 0.2), "max_ammo": -1},
-	"shotgun": {"name": "Shotgun", "damage": 8, "fire_rate": 0.8, "speed": 600, "spread": 15.0, "bullets": 5, "lifetime": 1.5, "aoe": 0.0, "color": Color(1, 0.6, 0.2), "max_ammo": 60},
-	"smg": {"name": "SMG", "damage": 6, "fire_rate": 0.08, "speed": 700, "spread": 5.0, "bullets": 1, "lifetime": 3.0, "aoe": 0.0, "color": Color(0.8, 0.8, 0.2), "max_ammo": 400},
-	"rifle": {"name": "Rifle", "damage": 40, "fire_rate": 1.2, "speed": 1200, "spread": 0.0, "bullets": 1, "lifetime": 3.0, "aoe": 0.0, "color": Color(0.3, 0.9, 1.0), "max_ammo": 40},
-	"rocket_launcher": {"name": "Rocket Launcher", "damage": 80, "fire_rate": 2.0, "speed": 400, "spread": 0.0, "bullets": 1, "lifetime": 5.0, "aoe": 120.0, "color": Color(1, 0.3, 0.1), "max_ammo": 20},
-	"flamethrower": {"name": "Flamethrower", "damage": 3, "fire_rate": 0.03, "speed": 300, "spread": 12.0, "bullets": 1, "lifetime": 0.4, "aoe": 0.0, "color": Color(1, 0.5, 0.0), "max_ammo": 500},
-	"minigun": {"name": "Minigun", "damage": 12, "fire_rate": 0.05, "speed": 750, "spread": 8.0, "bullets": 1, "lifetime": 3.0, "aoe": 0.0, "color": Color(0.7, 0.7, 0.7), "max_ammo": 800},
-	"radio_staff": {"name": "Radio Staff", "damage": 15, "fire_rate": 0.4, "speed": 600, "spread": 0.0, "bullets": 1, "lifetime": 5.0, "aoe": 0.0, "color": Color(0.1, 0.0, 0.1), "max_ammo": 200, "homing": true},
+	"pistol": {"name": "Pistol", "damage": 10, "fire_rate": 0.3, "speed": 800, "spread": 0.0, "bullets": 1, "lifetime": 3.0, "aoe": 0.0, "color": Color(1, 0.9, 0.2)},
+	"shotgun": {"name": "Shotgun", "damage": 8, "fire_rate": 0.8, "speed": 600, "spread": 15.0, "bullets": 5, "lifetime": 1.5, "aoe": 0.0, "color": Color(1, 0.6, 0.2)},
+	"smg": {"name": "SMG", "damage": 6, "fire_rate": 0.08, "speed": 700, "spread": 5.0, "bullets": 1, "lifetime": 3.0, "aoe": 0.0, "color": Color(0.8, 0.8, 0.2)},
+	"rifle": {"name": "Rifle", "damage": 40, "fire_rate": 1.2, "speed": 1200, "spread": 0.0, "bullets": 1, "lifetime": 3.0, "aoe": 0.0, "color": Color(0.3, 0.9, 1.0)},
+	"rocket_launcher": {"name": "Rocket Launcher", "damage": 80, "fire_rate": 2.0, "speed": 400, "spread": 0.0, "bullets": 1, "lifetime": 5.0, "aoe": 120.0, "color": Color(1, 0.3, 0.1)},
+	"flamethrower": {"name": "Flamethrower", "damage": 3, "fire_rate": 0.03, "speed": 300, "spread": 12.0, "bullets": 1, "lifetime": 0.4, "aoe": 0.0, "color": Color(1, 0.5, 0.0)},
+	"minigun": {"name": "Minigun", "damage": 12, "fire_rate": 0.05, "speed": 750, "spread": 8.0, "bullets": 1, "lifetime": 3.0, "aoe": 0.0, "color": Color(0.7, 0.7, 0.7)},
+	"radio_staff": {"name": "Radio Staff", "damage": 15, "fire_rate": 0.4, "speed": 600, "spread": 0.0, "bullets": 1, "lifetime": 5.0, "aoe": 0.0, "color": Color(0.1, 0.0, 0.1), "homing": true},
 }
 
 var weapons_owned: Dictionary = {"pistol": -1}  # weapon_id -> ammo (-1 = infinite)
@@ -58,13 +58,6 @@ func _process(delta):
 func _handle_summon(delta):
 	summon_cooldown -= delta
 	if current_weapon == "radio_staff" and Input.is_action_just_pressed("summon") and summon_cooldown <= 0:
-		var ammo = weapons_owned.get("radio_staff", 0)
-		if ammo == 0:
-			return
-		if ammo > 0:
-			weapons_owned["radio_staff"] -= 5
-			if weapons_owned["radio_staff"] < 0:
-				weapons_owned["radio_staff"] = 0
 		var minion = minion_scene.instantiate()
 		minion.global_position = global_position + Vector2(randf_range(-40, 40), randf_range(-40, 40))
 		minion.owner_player = self
@@ -88,18 +81,6 @@ func _spawn_radio_demon():
 func _input(event):
 	if is_dead or get_tree().paused:
 		return
-	if event.is_action_pressed("weapon_next"):
-		_switch_weapon(1)
-	elif event.is_action_pressed("weapon_prev"):
-		_switch_weapon(-1)
-	# Number keys 1-9 to select weapon by slot
-	if event is InputEventKey and event.pressed and not event.echo:
-		var key = event.keycode
-		if key >= KEY_1 and key <= KEY_9:
-			var slot = key - KEY_1  # 0-indexed
-			var owned = weapons_owned.keys()
-			if slot < owned.size():
-				current_weapon = owned[slot]
 
 
 func _handle_movement():
@@ -123,17 +104,6 @@ func _fire():
 	if bullet_scene == null:
 		return
 	var weapon = WEAPONS[current_weapon]
-	var ammo = weapons_owned[current_weapon]
-	# Check ammo (skip for infinite = -1)
-	if ammo == 0:
-		# Auto-switch to pistol when empty
-		current_weapon = "pistol"
-		return
-	if ammo > 0:
-		weapons_owned[current_weapon] -= weapon["bullets"]
-		if weapons_owned[current_weapon] <= 0:
-			weapons_owned[current_weapon] = 0
-
 	can_fire = false
 	for i in weapon["bullets"]:
 		var bullet = bullet_scene.instantiate()
@@ -163,33 +133,19 @@ func _switch_weapon(direction: int):
 	current_weapon = owned[idx]
 
 
-func add_weapon(weapon_id: String, ammo: int):
-	var max_ammo = WEAPONS[weapon_id]["max_ammo"]
-	if weapons_owned.has(weapon_id):
-		if weapons_owned[weapon_id] >= 0:
-			weapons_owned[weapon_id] = mini(weapons_owned[weapon_id] + ammo, max_ammo)
-	else:
-		weapons_owned[weapon_id] = mini(ammo, max_ammo)
+func add_weapon(weapon_id: String, _ammo: int = 0):
+	# Only one weapon at a time — replace current
+	weapons_owned.clear()
+	weapons_owned[weapon_id] = -1  # All weapons have infinite ammo
 	current_weapon = weapon_id
 
 
-func add_ammo(amount: int):
-	# Add ammo to current weapon if it uses ammo
-	if weapons_owned[current_weapon] >= 0:
-		var max_a = WEAPONS[current_weapon]["max_ammo"]
-		weapons_owned[current_weapon] = mini(weapons_owned[current_weapon] + amount, max_a)
-		return
-	# Otherwise find first weapon that needs ammo
-	for weapon_id in weapons_owned:
-		if weapons_owned[weapon_id] >= 0:
-			var max_a = WEAPONS[weapon_id]["max_ammo"]
-			weapons_owned[weapon_id] = mini(weapons_owned[weapon_id] + amount, max_a)
-			return
+func add_ammo(_amount: int):
+	pass  # All weapons have infinite ammo
 
 
 func get_ammo_text() -> String:
-	var ammo = weapons_owned[current_weapon]
-	return "INF" if ammo == -1 else str(ammo)
+	return "INF"
 
 
 func get_weapon_name() -> String:
