@@ -43,9 +43,10 @@ func _ready():
 
 	_spawn_vehicles()
 
-	get_tree().create_timer(2.0).timeout.connect(
-		func(): WaveManager.start_game()
-	)
+	if not GameManager.story_mode:
+		get_tree().create_timer(2.0).timeout.connect(
+			func(): WaveManager.start_game()
+		)
 
 
 func _spawn_vehicles():

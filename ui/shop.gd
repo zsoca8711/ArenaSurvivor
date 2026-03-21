@@ -41,12 +41,25 @@ func _input(event):
 		if is_open:
 			close()
 			get_viewport().set_input_as_handled()
-		elif WaveManager.buy_phase_active and not get_tree().paused:
+		elif _can_open_shop():
 			open()
+			if GameManager.story_mode and GameManager.story_step == 2:
+				GameManager.story_step = 3
 			get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("pause") and is_open:
 		close()
 		get_viewport().set_input_as_handled()
+
+
+func _can_open_shop() -> bool:
+	if get_tree().paused:
+		return false
+	if GameManager.story_mode:
+		# Story mode: only in safe zone, and only after reaching step 2+
+		var player = get_tree().get_first_node_in_group("player")
+		return player and player.in_safe_zone and GameManager.story_step >= 2
+	else:
+		return WaveManager.buy_phase_active
 
 
 func _build_ui():

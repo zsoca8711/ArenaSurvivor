@@ -43,6 +43,10 @@ const TELEKINETIC_RADIUS = 100.0
 func _ready():
 	hp = max_hp
 	add_to_group("player")
+	if GameManager.story_mode:
+		# No starting weapon in story mode
+		weapons_owned.clear()
+		current_weapon = ""
 
 
 func _is_local() -> bool:
@@ -77,6 +81,8 @@ func _sync_position(pos: Vector2, rot: float):
 
 
 func _handle_summon(delta):
+	if current_weapon == "":
+		return
 	summon_cooldown -= delta
 	if current_weapon == "radio_staff" and Input.is_action_just_pressed("summon") and summon_cooldown <= 0:
 		var minion = minion_scene.instantiate()
@@ -180,6 +186,8 @@ func _handle_shooting():
 func _fire():
 	if bullet_scene == null:
 		return
+	if current_weapon == "" or not WEAPONS.has(current_weapon):
+		return
 	var weapon = WEAPONS[current_weapon]
 	can_fire = false
 	for i in weapon["bullets"]:
@@ -226,6 +234,8 @@ func get_ammo_text() -> String:
 
 
 func get_weapon_name() -> String:
+	if current_weapon == "" or not WEAPONS.has(current_weapon):
+		return "No weapon"
 	return WEAPONS[current_weapon]["name"]
 
 

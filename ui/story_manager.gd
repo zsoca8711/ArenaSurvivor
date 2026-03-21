@@ -227,16 +227,21 @@ func _process(_delta):
 		1:
 			_update_arrow(player, treasure_pos)
 			if player.global_position.distance_to(treasure_pos) < PICKUP_RADIUS:
-				_advance(2, "You found the treasure! A powerful pistol! Find a safe zone!")
+				_advance(2, "You found a pistol! Find a safe zone to open the shop!")
 				_remove_marker("TREASURE")
+				# Give pistol
+				player.add_weapon("pistol")
 		2:
 			_find_nearest_safezone(player)
 			_update_arrow(player, target_pos)
-			if player.in_safe_zone:
-				_advance(3, "Safe zone reached! Kill 10 monsters!")
-				story_kills = 0
+			quest_label.text = "Find a safe zone! (press E to open shop inside)"
+			# Step 3 is triggered by shop.gd when shop is opened in safe zone
 		3:
 			arrow_label.visible = false
+			# Start waves if not already running (shop was opened)
+			if not WaveManager.wave_active and not WaveManager.buy_phase_active:
+				_show_message("The monsters are coming! Defend yourself!")
+				WaveManager.start_game()
 			quest_label.text = "Kill 10 monsters! (%d/10)" % story_kills
 			if story_kills >= 10:
 				_advance(4, "Well done! A village is under attack! Go save them!")
@@ -371,7 +376,7 @@ func _update_quest_text():
 	match GameManager.story_step:
 		0: quest_label.text = "Find the ancient scroll near you!"
 		1: quest_label.text = "Follow the map to the treasure!"
-		2: quest_label.text = "Find a safe zone!"
+		2: quest_label.text = "Find a safe zone! (E to open shop)"
 		3: quest_label.text = "Kill 10 monsters! (%d/10)" % story_kills
 		4: quest_label.text = "Go to the burning village!"
 		5: quest_label.text = "Save the village!"
