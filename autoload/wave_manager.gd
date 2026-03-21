@@ -188,13 +188,17 @@ func _get_enemy_type() -> String:
 
 func _get_boss_type() -> String:
 	var roll = randf()
-	if roll < 0.10:
-		return "demogorgon"   # 10% — rarest
-	elif roll < 0.25:
-		return "vecna"        # 15%
-	elif roll < 0.45:
-		return "mind_flayer"  # 20%
-	return "giant_tank"       # 55% — most common
+	if roll < 0.05:
+		return "god"          # 5% — ultra rare
+	elif roll < 0.10:
+		return "satan"        # 5% — ultra rare, drops Megacluster
+	elif roll < 0.18:
+		return "demogorgon"   # 8%
+	elif roll < 0.30:
+		return "vecna"        # 12%
+	elif roll < 0.48:
+		return "mind_flayer"  # 18%
+	return "giant_tank"       # 52% — most common
 
 
 func _get_max_horde(enemy_type: String) -> int:

@@ -75,6 +75,8 @@ func _build_ui():
 	_add_cheat_button(vbox, "Summon Giant Tank", _on_cheat_giant_tank)
 	_add_cheat_button(vbox, "Summon Vecna", _on_cheat_vecna)
 	_add_cheat_button(vbox, "Summon Mind Flayer", _on_cheat_mind_flayer)
+	_add_cheat_button(vbox, "Summon God", _on_cheat_god)
+	_add_cheat_button(vbox, "Summon Satan", _on_cheat_satan)
 
 
 func _add_button(parent: Control, text: String, callback: Callable):
@@ -153,6 +155,14 @@ func _on_cheat_vecna():
 
 func _on_cheat_mind_flayer():
 	_spawn_cheat_boss("res://enemies/boss_mind_flayer.tscn")
+
+
+func _on_cheat_god():
+	_spawn_cheat_boss("res://enemies/boss_god.tscn")
+
+
+func _on_cheat_satan():
+	_spawn_cheat_boss("res://enemies/boss_satan.tscn")
 
 
 func _spawn_cheat_boss(scene_path: String):
