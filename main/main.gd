@@ -4,6 +4,12 @@ extends Node2D
 
 var player_scene = preload("res://player/player.tscn")
 
+var vehicle_scenes = [
+	preload("res://vehicles/motor.tscn"),
+	preload("res://vehicles/car.tscn"),
+	preload("res://vehicles/tank.tscn"),
+]
+
 var enemy_scenes = {
 	"swarmer": preload("res://enemies/swarmer.tscn"),
 	"tank": preload("res://enemies/tank.tscn"),
@@ -35,9 +41,25 @@ func _ready():
 	else:
 		_spawn_local_player()
 
+	_spawn_vehicles()
+
 	get_tree().create_timer(2.0).timeout.connect(
 		func(): WaveManager.start_game()
 	)
+
+
+func _spawn_vehicles():
+	var arena = GameManager.ARENA_SIZE
+	# Spawn 8-12 random vehicles across the map
+	var count = randi_range(8, 12)
+	for i in count:
+		var scene = vehicle_scenes[randi() % vehicle_scenes.size()]
+		var vehicle = scene.instantiate()
+		vehicle.global_position = Vector2(
+			randf_range(300, arena.x - 300),
+			randf_range(300, arena.y - 300)
+		)
+		add_child(vehicle)
 
 
 func _spawn_local_player():

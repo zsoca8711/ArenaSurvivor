@@ -129,9 +129,32 @@ func _spawn_radio_demon():
 	get_tree().current_scene.call_deferred("add_child", demon)
 
 
+var in_vehicle: bool = false
+
+
 func _input(event):
 	if is_dead or get_tree().paused:
 		return
+	# Enter nearby vehicle with E
+	if event.is_action_pressed("open_shop") and not in_vehicle:
+		var nearest = _find_nearest_vehicle()
+		if nearest and not WaveManager.buy_phase_active:
+			nearest.enter_vehicle(self)
+			in_vehicle = true
+			get_viewport().set_input_as_handled()
+
+
+func _find_nearest_vehicle() -> Node2D:
+	var min_dist = 60.0
+	var nearest = null
+	for v in get_tree().get_nodes_in_group("vehicles"):
+		if v.is_destroyed or v.occupied:
+			continue
+		var dist = global_position.distance_to(v.global_position)
+		if dist < min_dist:
+			min_dist = dist
+			nearest = v
+	return nearest
 
 
 func _handle_movement():

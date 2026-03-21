@@ -19,6 +19,8 @@ func _on_body_entered(body: Node2D):
 		if from_boss:
 			body._last_damage_source_is_boss = true
 		body.take_damage(damage)
+	elif body.is_in_group("vehicles"):
+		body.take_vehicle_damage(damage)
 	call_deferred("queue_free")
 
 
