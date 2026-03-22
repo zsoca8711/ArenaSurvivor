@@ -1,7 +1,8 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://enemies/boss_giant_tank.gd" id="1"]
 [ext_resource type="Texture2D" path="res://assets/sprites/boss_giant_tank.png" id="2"]
+[ext_resource type="Texture2D" path="res://assets/sprites/barrel_gun_dark2.png" id="3"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_1"]
 radius = 35.0
@@ -14,6 +15,12 @@ script = ExtResource("1")
 [node name="Body" type="Sprite2D" parent="."]
 texture = ExtResource("2")
 scale = Vector2(0.8, 0.8)
+
+[node name="Barrel" type="Sprite2D" parent="."]
+texture = ExtResource("3")
+position = Vector2(30, 0)
+scale = Vector2(0.7, 0.7)
+z_index = 1
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CircleShape2D_1")
