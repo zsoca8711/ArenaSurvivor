@@ -84,6 +84,8 @@ func _apply(player):
 
 
 func _create_floating_text(pos: Vector2, text: String, color: Color):
+	if not is_instance_valid(get_tree()) or not get_tree().current_scene:
+		return
 	var label = Label.new()
 	label.text = text
 	label.global_position = pos + Vector2(-30, -20)
@@ -91,12 +93,14 @@ func _create_floating_text(pos: Vector2, text: String, color: Color):
 	label.add_theme_color_override("font_color", color)
 	label.z_index = 100
 	get_tree().current_scene.add_child(label)
-	# Float up and fade out
 	var tween = label.create_tween()
 	tween.set_parallel(true)
 	tween.tween_property(label, "position:y", label.position.y - 40, 1.5)
 	tween.tween_property(label, "modulate:a", 0.0, 1.5)
-	tween.chain().tween_callback(label.queue_free)
+	tween.chain().tween_callback(func():
+		if is_instance_valid(label):
+			label.queue_free()
+	)
 
 
 func _random_money() -> int:
