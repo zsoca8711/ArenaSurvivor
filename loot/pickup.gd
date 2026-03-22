@@ -84,7 +84,7 @@ func _apply(player):
 
 
 func _create_floating_text(pos: Vector2, text: String, color: Color):
-	if not is_instance_valid(get_tree()) or not get_tree().current_scene:
+	if not is_inside_tree() or not get_tree().current_scene:
 		return
 	var label = Label.new()
 	label.text = text

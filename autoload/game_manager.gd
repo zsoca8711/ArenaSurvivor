@@ -46,25 +46,16 @@ var _explosion_textures = [
 ]
 
 
-func _notification(what):
-	if what == NOTIFICATION_PREDELETE:
-		# Clean up to prevent leaks
-		if get_tree() and get_tree().current_scene:
-			for child in get_tree().current_scene.get_children():
-				if child is Sprite2D and child.name.begins_with("@"):
-					child.queue_free()
-
-
 func spawn_explosion(pos: Vector2):
-	if not is_instance_valid(get_tree()) or not get_tree().current_scene:
+	if not is_inside_tree() or not get_tree().current_scene:
 		return
 	var spr = Sprite2D.new()
 	spr.texture = _explosion_textures[randi() % _explosion_textures.size()]
 	spr.global_position = pos
 	spr.z_index = 15
 	spr.scale = Vector2(0.3, 0.3)
-	get_tree().current_scene.call_deferred("add_child", spr)
-	var tween = spr.create_tween()
+	get_tree().current_scene.add_child(spr)
+	var tween = get_tree().create_tween()
 	tween.set_parallel(true)
 	tween.tween_property(spr, "scale", Vector2(1.0, 1.0), 0.3)
 	tween.tween_property(spr, "modulate:a", 0.0, 0.5)
@@ -174,7 +165,7 @@ var _pickup_scene = preload("res://loot/pickup.tscn")
 func try_drop_loot(pos: Vector2):
 	if randf() > 0.25:
 		return
-	if not is_instance_valid(get_tree()) or not get_tree().current_scene:
+	if not is_inside_tree() or not get_tree().current_scene:
 		return
 	var pickup = _pickup_scene.instantiate()
 	pickup.global_position = pos
