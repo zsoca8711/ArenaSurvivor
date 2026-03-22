@@ -65,4 +65,5 @@ func _explode():
 
 
 func die():
+	GameManager.spawn_explosion(global_position)
 	_explode()

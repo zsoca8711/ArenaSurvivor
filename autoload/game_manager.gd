@@ -39,6 +39,27 @@ func get_safe_zone_time() -> float:
 
 const SAVE_PATH = "user://story_save.json"
 
+var _explosion_textures = [
+	preload("res://assets/sprites/explosion2.png"),
+	preload("res://assets/sprites/explosion3.png"),
+	preload("res://assets/sprites/explosion4.png"),
+]
+
+
+func spawn_explosion(pos: Vector2):
+	var spr = Sprite2D.new()
+	spr.texture = _explosion_textures[randi() % _explosion_textures.size()]
+	spr.global_position = pos
+	spr.z_index = 15
+	get_tree().current_scene.call_deferred("add_child", spr)
+	# Grow and fade out
+	spr.scale = Vector2(0.3, 0.3)
+	var tween = spr.create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(spr, "scale", Vector2(1.0, 1.0), 0.3)
+	tween.tween_property(spr, "modulate:a", 0.0, 0.5)
+	tween.chain().tween_callback(spr.queue_free)
+
 
 func save_story():
 	var player = get_tree().get_first_node_in_group("player")

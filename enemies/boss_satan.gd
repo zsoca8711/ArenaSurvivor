@@ -162,6 +162,7 @@ func take_damage(amount: float, _source_color: Color = Color.WHITE):
 
 
 func die():
+	GameManager.spawn_explosion(global_position)
 	_end_laser()
 	GameManager.add_money(money_reward)
 	GameManager.enemy_killed()

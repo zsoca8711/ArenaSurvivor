@@ -143,6 +143,7 @@ func _is_flamethrower(color: Color) -> bool:
 
 
 func die():
+	GameManager.spawn_explosion(global_position)
 	GameManager.add_money(money_reward)
 	GameManager.enemy_killed()
 	WaveManager.enemy_died()
