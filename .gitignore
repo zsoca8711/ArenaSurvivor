@@ -1,8 +1,7 @@
 # Godot 4
 .godot/
 
-# Kenney asset packs (nagy zip-ek és kicsomagolt mappák, nem kell a repoban)
-kenney_*/
+# Zip fájlok
 *.zip
 
 # OS files
