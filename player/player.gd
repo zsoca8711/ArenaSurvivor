@@ -146,6 +146,7 @@ func _spawn_radio_demon():
 
 var in_vehicle: bool = false
 var in_safe_zone: bool = false
+var gold: int = 0
 
 
 func _input(event):

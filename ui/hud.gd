@@ -135,11 +135,11 @@ func _process(_delta):
 	elif WaveManager.buy_phase_active:
 		var t = WaveManager.get_buy_time_remaining()
 		timer_label.text = "Shop: %d" % ceili(t)
-	kills_label.text = "Kills: %d" % GameManager.kills
 	var player = get_tree().get_first_node_in_group("player")
 	if player:
 		weapon_label.text = "%s | %s" % [player.get_weapon_name(), player.get_ammo_text()]
 		speed_label.text = "SPD: %d" % int(min(player.speed, 200))
+		kills_label.text = "Kills: %d" % GameManager.kills + (" | Gold: %d" % player.gold if player.gold > 0 else "")
 		_update_fortress_arrow(player)
 
 

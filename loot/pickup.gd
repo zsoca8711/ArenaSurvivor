@@ -1,6 +1,6 @@
 extends Area2D
 
-enum PickupType {HEALTH, AMMO, SPEED_BOOST, DAMAGE_BOOST, MONEY}
+enum PickupType {HEALTH, AMMO, SPEED_BOOST, DAMAGE_BOOST, MONEY, GOLD}
 
 var pickup_type: int = 0  # Set before adding to tree
 
@@ -10,6 +10,7 @@ const COLORS = {
 	2: Color(0.2, 0.5, 1.0),   # SPEED_BOOST - blue
 	3: Color(1.0, 0.2, 0.2),   # DAMAGE_BOOST - red
 	4: Color(1.0, 0.85, 0.0),  # MONEY - gold
+	5: Color(1.0, 0.7, 0.0),   # GOLD - bright gold
 }
 
 const NAMES = {
@@ -18,6 +19,7 @@ const NAMES = {
 	2: "Speed Up",
 	3: "Damage Up",
 	4: "Money",
+	5: "Gold",
 }
 
 var lifetime: float = 15.0
@@ -74,6 +76,9 @@ func _apply(player):
 			var amount = _random_money()
 			GameManager.add_money(amount)
 			pickup_text = "+$%d" % amount
+		PickupType.GOLD:
+			player.gold += 1
+			pickup_text = "+1 Gold (sell at village)"
 
 	_create_floating_text(global_position, pickup_text, pickup_color)
 

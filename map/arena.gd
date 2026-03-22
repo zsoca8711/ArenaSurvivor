@@ -69,6 +69,9 @@ func _ready():
 	_create_map_extras()
 	_create_bases()
 	_create_safe_zones()
+	_create_factories()
+	_create_mines()
+	_create_castles()
 	_create_fortress()
 
 
@@ -511,6 +514,169 @@ func _create_safe_zones():
 		var zone = safe_zone_scene.instantiate()
 		zone.global_position = pos
 		call_deferred("add_child", zone)
+
+
+# --- FACTORIES (2 turrets, $2000 reward) ---
+func _create_factories():
+	var arena = GameManager.ARENA_SIZE
+	var fp = GameManager.FORTRESS_POS
+	var center = arena / 2.0
+
+	for i in randi_range(2, 4):
+		var pos = _random_pos_outside_fortress()
+		# Avoid center and existing structures
+		if pos.distance_to(center) < 600:
+			continue
+		_create_factory(pos)
+
+
+func _create_factory(center: Vector2):
+	var size = 200.0
+	var half = size / 2.0
+
+	# Fence perimeter
+	_create_fence_line(center + Vector2(-half, -half), center + Vector2(half, -half), true)
+	_create_fence_line(center + Vector2(-half, half), center + Vector2(half, half), true)
+	_create_fence_line(center + Vector2(-half, -half), center + Vector2(-half, half), false)
+	_create_fence_line(center + Vector2(half, -half), center + Vector2(half, half), false)
+
+	# Factory buildings (gray crates)
+	for j in 4:
+		_place_obstacle(center + Vector2(randf_range(-60, 60), randf_range(-60, 60)), crate_metal, Vector2(40, 40))
+
+	# Barrels
+	for j in 3:
+		_place_obstacle(center + Vector2(randf_range(-70, 70), randf_range(-70, 70)), barrel_black, Vector2(20, 20))
+
+	# 2 Turrets
+	for j in 2:
+		var turret = machine_gunner_scene.instantiate()
+		turret.global_position = center + Vector2(randf_range(-60, 60), randf_range(-60, 60))
+		turret.add_to_group("factory_enemies_%d" % center.x)
+		call_deferred("add_child", turret)
+
+	# Reward marker
+	var label = Label.new()
+	label.text = "FACTORY ($2000)"
+	label.position = center + Vector2(-50, -half - 20)
+	label.add_theme_font_size_override("font_size", 12)
+	label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.3))
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.z_index = 10
+	add_child(label)
+
+
+# --- MINES (drop gold) ---
+func _create_mines():
+	var pickup_scene = preload("res://loot/pickup.tscn")
+
+	for i in randi_range(3, 6):
+		var pos = _random_pos_outside_fortress()
+		var size = 120.0
+		var half = size / 2.0
+
+		# Mine entrance visual
+		var mine_bg = ColorRect.new()
+		mine_bg.color = Color(0.25, 0.2, 0.15, 0.5)
+		mine_bg.size = Vector2(size, size)
+		mine_bg.position = pos - Vector2(half, half)
+		mine_bg.z_index = -8
+		mine_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(mine_bg)
+
+		# Crates and barrels
+		_place_obstacle(pos + Vector2(-30, -20), crate_tex, Vector2(30, 30))
+		_place_obstacle(pos + Vector2(30, 20), barrel_rust, Vector2(20, 20))
+
+		# Spawn gold pickups inside
+		for j in randi_range(3, 6):
+			var gold = pickup_scene.instantiate()
+			gold.global_position = pos + Vector2(randf_range(-40, 40), randf_range(-40, 40))
+			gold.pickup_type = 5  # GOLD
+			gold.lifetime = 9999.0  # Permanent
+			call_deferred("add_child", gold)
+
+		# Label
+		var label = Label.new()
+		label.text = "MINE"
+		label.position = pos + Vector2(-20, -half - 15)
+		label.add_theme_font_size_override("font_size", 12)
+		label.add_theme_color_override("font_color", Color(1, 0.7, 0.0))
+		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		label.z_index = 10
+		add_child(label)
+
+
+# --- CASTLES (1 boss + 4 turrets, $6000 reward) ---
+func _create_castles():
+	var arena = GameManager.ARENA_SIZE
+	var fp = GameManager.FORTRESS_POS
+	var center = arena / 2.0
+
+	for i in randi_range(1, 3):
+		var pos = _random_pos_outside_fortress()
+		if pos.distance_to(center) < 800:
+			continue
+		_create_castle(pos)
+
+
+func _create_castle(center: Vector2):
+	var size = 350.0
+	var half = size / 2.0
+
+	# Double fence perimeter (thick walls)
+	_create_fence_line(center + Vector2(-half, -half), center + Vector2(half, -half), true)
+	_create_fence_line(center + Vector2(-half, half), center + Vector2(half, half), true)
+	_create_fence_line(center + Vector2(-half, -half), center + Vector2(-half, half), false)
+	_create_fence_line(center + Vector2(half, -half), center + Vector2(half, half), false)
+
+	# Inner walls
+	var inner = half * 0.6
+	_create_fence_line(center + Vector2(-inner, -inner), center + Vector2(inner, -inner), true)
+	_create_fence_line(center + Vector2(-inner, inner), center + Vector2(inner, inner), true)
+
+	# Heavy fortifications inside
+	for j in 8:
+		var tex = [sandbag_tex, sandbag_beige, barricade_tex, barricade_wood][randi() % 4]
+		_place_obstacle(center + Vector2(randf_range(-100, 100), randf_range(-100, 100)), tex, Vector2(36, 24))
+
+	# Barrels and crates
+	for j in 5:
+		_place_obstacle(center + Vector2(randf_range(-120, 120), randf_range(-120, 120)),
+			[barrel_tex, barrel_red, crate_metal][randi() % 3], Vector2(24, 24))
+
+	# 4 Turrets at corners
+	var turret_positions = [
+		center + Vector2(-half + 30, -half + 30),
+		center + Vector2(half - 30, -half + 30),
+		center + Vector2(-half + 30, half - 30),
+		center + Vector2(half - 30, half - 30),
+	]
+	for pos in turret_positions:
+		var turret = machine_gunner_scene.instantiate()
+		turret.global_position = pos
+		turret.max_hp = 600.0
+		turret.hp = 600.0
+		call_deferred("add_child", turret)
+
+	# Boss in center (random type)
+	var boss_types = ["res://enemies/boss_giant_tank.tscn", "res://enemies/boss_vecna.tscn",
+		"res://enemies/boss_mind_flayer.tscn", "res://enemies/boss_demogorgon.tscn"]
+	var boss_scene = load(boss_types[randi() % boss_types.size()])
+	var boss = boss_scene.instantiate()
+	boss.global_position = center
+	boss.money_reward = 6000
+	call_deferred("add_child", boss)
+
+	# Label
+	var label = Label.new()
+	label.text = "CASTLE ($6000)"
+	label.position = center + Vector2(-45, -half - 20)
+	label.add_theme_font_size_override("font_size", 14)
+	label.add_theme_color_override("font_color", Color(0.9, 0.2, 0.2))
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.z_index = 10
+	add_child(label)
 
 
 # --- FORTRESS ---

@@ -18,6 +18,7 @@ var weapon_items = [
 var special_items = [
 	{"id": "hire_demon", "name": "Hire Radio Demon (5s aura)", "price": 3000, "type": "special"},
 	{"id": "telekinetic", "name": "Telekinetic (key: 2, 10s cd)", "price": 50000, "type": "special"},
+	{"id": "sell_gold", "name": "Sell All Gold ($200 each)", "price": 0, "type": "special"},
 ]
 
 var upgrade_items = [
@@ -275,3 +276,8 @@ func _apply_special(special_id: String, player):
 			demon.call_deferred("activate_aura")
 		"telekinetic":
 			player.has_telekinetic = true
+		"sell_gold":
+			if player.gold > 0:
+				var total = player.gold * 200
+				GameManager.add_money(total)
+				player.gold = 0
