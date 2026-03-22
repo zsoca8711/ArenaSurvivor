@@ -104,31 +104,138 @@ func _setup_phase1():
 
 
 func _setup_phase2():
-	village_pos = Vector2(3000, 3000)
+	# Find a safe zone to use as the village
+	call_deferred("_find_village_safezone")
+
+
+func _find_village_safezone():
+	var player_start = Vector2(5000, 5000)
+	var best_zone = null
+	var best_dist = INF
+	# Find a safe zone that's not too close and not too far
+	for zone in get_tree().get_nodes_in_group("safe_zones"):
+		var dist = player_start.distance_to(zone.global_position)
+		if dist > 500 and dist < 4000 and dist < best_dist:
+			best_dist = dist
+			best_zone = zone
+	if best_zone:
+		village_pos = best_zone.global_position
+	else:
+		village_pos = Vector2(3000, 3000)
+
 	if GameManager.story_step == 4:
 		_create_marker(village_pos, Color(1, 0.3, 0.1), "BURNING VILLAGE")
 	elif GameManager.story_step == 5:
-		# Spawn villagers and attacking monsters
-		call_deferred("_spawn_village_battle")
+		_spawn_village_battle()
 
 
 func _spawn_village_battle():
+	# Villagers fleeing
 	for i in 8:
 		var v = villager_scene.instantiate()
-		v.global_position = village_pos + Vector2(randf_range(-150, 150), randf_range(-150, 150))
+		v.global_position = village_pos + Vector2(randf_range(-200, 200), randf_range(-200, 200))
 		get_tree().current_scene.call_deferred("add_child", v)
-	# Burning effect
-	for i in 5:
-		var fire = Polygon2D.new()
-		fire.color = Color(1, 0.4, 0.0, 0.4)
-		var pts = PackedVector2Array()
-		for j in 8:
-			var a = j * TAU / 8
-			pts.append(Vector2(cos(a) * randf_range(30, 60), sin(a) * randf_range(30, 60)))
-		fire.polygon = pts
-		fire.global_position = village_pos + Vector2(randf_range(-100, 100), randf_range(-100, 100))
-		fire.z_index = -5
+
+	# Burn the safe zone — fire effects on it
+	_burn_safezone(village_pos)
+
+	# Build extra village structures around the safe zone and burn them
+	_build_burning_village(village_pos)
+
+
+func _burn_safezone(pos: Vector2):
+	# Disable the safe zone's protection
+	for zone in get_tree().get_nodes_in_group("safe_zones"):
+		if zone.global_position.distance_to(pos) < 200:
+			zone.protection_active = false
+			zone.timer_label.text = "BURNING!"
+			zone.timer_label.add_theme_color_override("font_color", Color(1, 0.2, 0.0))
+
+	# Fire effects on the safe zone
+	for i in 8:
+		var fire = _create_fire(pos + Vector2(randf_range(-120, 120), randf_range(-120, 120)))
 		get_tree().current_scene.call_deferred("add_child", fire)
+
+
+func _build_burning_village(center: Vector2):
+	var farmhouse_tex = preload("res://assets/sprites/farmhouse.png")
+	var farm_hay_tex = preload("res://assets/sprites/farm_hay.png")
+	var farm_corn_tex = preload("res://assets/sprites/farm_corn.png")
+
+	# Houses around the safe zone
+	var house_positions = [
+		center + Vector2(-250, -200),
+		center + Vector2(250, -150),
+		center + Vector2(-200, 200),
+		center + Vector2(280, 180),
+		center + Vector2(0, -280),
+		center + Vector2(-300, 0),
+	]
+
+	for pos in house_positions:
+		# House
+		var house = Sprite2D.new()
+		house.texture = farmhouse_tex
+		house.global_position = pos
+		house.scale = Vector2(0.3, 0.3)
+		house.z_index = 2
+		get_tree().current_scene.call_deferred("add_child", house)
+
+		# Fire on each house
+		var fire = _create_fire(pos + Vector2(randf_range(-15, 15), randf_range(-15, 15)))
+		get_tree().current_scene.call_deferred("add_child", fire)
+
+	# Hay bales burning
+	for i in 6:
+		var hay = Sprite2D.new()
+		hay.texture = farm_hay_tex
+		hay.global_position = center + Vector2(randf_range(-300, 300), randf_range(-300, 300))
+		hay.scale = Vector2(0.3, 0.3)
+		hay.z_index = 1
+		get_tree().current_scene.call_deferred("add_child", hay)
+		var fire = _create_fire(hay.global_position)
+		get_tree().current_scene.call_deferred("add_child", fire)
+
+	# Corn fields burning
+	for i in 10:
+		var corn = Sprite2D.new()
+		corn.texture = farm_corn_tex
+		corn.global_position = center + Vector2(randf_range(-350, 350), randf_range(-350, 350))
+		corn.scale = Vector2(0.25, 0.25)
+		corn.z_index = 1
+		get_tree().current_scene.call_deferred("add_child", corn)
+
+	# Smoke columns
+	for i in 4:
+		var smoke = _create_smoke(center + Vector2(randf_range(-200, 200), randf_range(-200, 200)))
+		get_tree().current_scene.call_deferred("add_child", smoke)
+
+
+func _create_fire(pos: Vector2) -> Polygon2D:
+	var fire = Polygon2D.new()
+	fire.color = Color(1, randf_range(0.2, 0.5), 0.0, randf_range(0.3, 0.6))
+	var pts = PackedVector2Array()
+	var size = randf_range(20, 45)
+	for j in 8:
+		var a = j * TAU / 8
+		pts.append(Vector2(cos(a) * randf_range(size * 0.5, size), sin(a) * randf_range(size * 0.5, size)))
+	fire.polygon = pts
+	fire.global_position = pos
+	fire.z_index = 8
+	return fire
+
+
+func _create_smoke(pos: Vector2) -> Polygon2D:
+	var smoke = Polygon2D.new()
+	smoke.color = Color(0.2, 0.2, 0.2, 0.3)
+	var pts = PackedVector2Array()
+	for j in 10:
+		var a = j * TAU / 10
+		pts.append(Vector2(cos(a) * randf_range(30, 60), sin(a) * randf_range(30, 60)))
+	smoke.polygon = pts
+	smoke.global_position = pos
+	smoke.z_index = 9
+	return smoke
 
 
 func _setup_phase3():
@@ -244,8 +351,16 @@ func _process(_delta):
 				WaveManager.start_game()
 			quest_label.text = "Kill 10 monsters! (%d/10)" % story_kills
 			if story_kills >= 10:
+				# Find a safe zone to burn as village
+				var best_zone = null
+				var best_dist = INF
+				for zone in get_tree().get_nodes_in_group("safe_zones"):
+					var dist = player.global_position.distance_to(zone.global_position)
+					if dist > 500 and dist < best_dist:
+						best_dist = dist
+						best_zone = zone
+				village_pos = best_zone.global_position if best_zone else Vector2(3000, 3000)
 				_advance(4, "Well done! A village is under attack! Go save them!")
-				village_pos = Vector2(3000, 3000)
 				_create_marker(village_pos, Color(1, 0.3, 0.1), "BURNING VILLAGE")
 		4:
 			_update_arrow(player, village_pos)
