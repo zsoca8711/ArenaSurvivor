@@ -139,8 +139,9 @@ func _update_laser(delta):
 		laser_line.add_point(target.global_position - global_position)
 		var pulse = 0.7 + sin(laser_timer * 12) * 0.3
 		laser_line.default_color = Color(1, 0.1 * pulse, 0.05 * pulse, 0.9)
-		target._last_damage_source_is_boss = true
-		target.take_damage(LASER_DPS * delta)
+		if not target.in_safe_zone:
+			target._last_damage_source_is_boss = true
+			target.take_damage(LASER_DPS * delta)
 
 
 func _end_laser():

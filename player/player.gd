@@ -256,6 +256,8 @@ var _last_damage_source_is_boss: bool = false
 
 
 func _process_contact_damage(delta):
+	if in_safe_zone:
+		return
 	damage_cooldown -= delta
 	if damage_cooldown > 0:
 		return

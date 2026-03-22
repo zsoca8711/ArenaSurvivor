@@ -124,11 +124,11 @@ func _start_beam():
 	beam_active = true
 	beam_duration = BEAM_DURATION
 	beam_line.visible = true
-	# Halve the player's HP (can't kill)
-	if target and is_instance_valid(target) and target.has_method("take_damage"):
+	# Halve the player's HP (can't kill, not in safe zone)
+	if target and is_instance_valid(target) and not target.in_safe_zone:
 		var halved = target.hp / 2.0
 		target.hp = halved
-		target.hp = max(target.hp, 1.0)  # Never kill, minimum 1 HP
+		target.hp = max(target.hp, 1.0)
 		GameManager.health_changed.emit(target.hp, target.max_hp)
 
 

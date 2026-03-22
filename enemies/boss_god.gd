@@ -130,9 +130,10 @@ func _update_laser(delta):
 		# Pulsing white/yellow
 		var pulse = 0.7 + sin(laser_timer * 12) * 0.3
 		laser_line.default_color = Color(1, 1 * pulse, 0.5 * pulse, 0.9)
-		# Deal damage per second
-		target._last_damage_source_is_boss = true
-		target.take_damage(LASER_DPS * delta)
+		# Deal damage per second (not in safe zone)
+		if not target.in_safe_zone:
+			target._last_damage_source_is_boss = true
+			target.take_damage(LASER_DPS * delta)
 
 
 func _end_laser():
