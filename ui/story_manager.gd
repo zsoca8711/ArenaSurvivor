@@ -383,8 +383,10 @@ func _process(_delta):
 		6:
 			_advance(7, "The forest! Tamed monsters fight alongside you. Kill 100 enemies!")
 			story_kills = 0
+			_ensure_waves_running()
 		7:
 			arrow_label.visible = false
+			_ensure_waves_running()
 			quest_label.text = "Forest battle! Kill 100 enemies! (%d/100)" % story_kills
 			if story_kills >= 100:
 				_show_message("Forest cleared! Moving to the battlefield...")
@@ -397,8 +399,10 @@ func _process(_delta):
 		8:
 			_advance(9, "The battlefield! Allies fight bosses! Kill 50 enemies!")
 			story_kills = 0
+			_ensure_waves_running()
 		9:
 			arrow_label.visible = false
+			_ensure_waves_running()
 			quest_label.text = "Battlefield! Kill 50 enemies! (%d/50)" % story_kills
 			if story_kills >= 50:
 				_show_message("Battle won! But the monsters surround you... Winter comes!")
@@ -410,6 +414,7 @@ func _process(_delta):
 				)
 		10:
 			arrow_label.visible = false
+			_ensure_waves_running()
 			quest_label.text = "Surrounded! Break through the monster ring!"
 			# Check if player escaped the ring (distance > 1200 from center)
 			if player.global_position.distance_to(Vector2(5000, 5000)) > 1200:
@@ -444,6 +449,11 @@ func _advance(new_step: int, message: String):
 	_update_quest_text()
 	_show_message(message)
 	GameManager.save_story()
+
+
+func _ensure_waves_running():
+	if not WaveManager.wave_active and not WaveManager.buy_phase_active:
+		WaveManager.start_game()
 
 
 func _on_kill():
