@@ -105,8 +105,8 @@ func _update_laser():
 	if occupied:
 		laser_line.clear_points()
 		laser_line.add_point(Vector2.ZERO)
-		var aim_dir = Vector2.from_angle(rotation)
-		laser_line.add_point(aim_dir * 500)
+		# Forward direction in local space (vehicle already rotated by look_at)
+		laser_line.add_point(Vector2(500, 0))
 		if tank_fire_cooldown <= 0:
 			laser_line.default_color = Color(1, 0, 0, 0.7)
 		else:
